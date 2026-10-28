@@ -359,7 +359,8 @@ export default function ScheduleCalendar({
                 background: 'transparent',
                 borderRadius: '6px',
                 color: '#374151',
-                cursor: 'pointer'
+                cursor: isAtCurrentMonth ? 'not-allowed' : 'pointer',
+                opacity: isAtCurrentMonth ? 0.35 : 1
               }}
               title="Previous Month"
             >

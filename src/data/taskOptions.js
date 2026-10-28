@@ -60,3 +60,11 @@ export function taskTimeSummary(task) {
   }
   return { range: '', duration: formatDuration(task.estimatedHours) };
 }
+
+// Whole calendar days from today to a YYYY-MM-DD date (0 = today)
+export function calendarDaysUntil(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((new Date(y, m - 1, d) - today) / 86400000);
+}

@@ -18,7 +18,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import { calculateTimeRemaining } from '../services/prioritizationEngine';
-import { TASK_CATEGORIES, categoryClassName, taskTimeSummary } from '../data/taskOptions.js';
+import { TASK_CATEGORIES, categoryClassName, taskTimeSummary, calendarDaysUntil } from '../data/taskOptions.js';
 
 export default function Dashboard({
   tasks,
@@ -57,7 +57,7 @@ export default function Dashboard({
   const upcomingDeadlines = [...activeTasks]
     .filter(t => {
       const { diffHours } = calculateTimeRemaining(t.deadlineDate, t.deadlineTime);
-      return diffHours > 0;
+      return diffHours > 0 && calendarDaysUntil(t.deadlineDate) <= 7;
     })
     .sort((a, b) => {
       const diffA = calculateTimeRemaining(a.deadlineDate, a.deadlineTime).diffHours;
@@ -437,8 +437,8 @@ export default function Dashboard({
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {upcomingDeadlines.map(t => {
-                    const { diffHours, isDueToday } = calculateTimeRemaining(t.deadlineDate, t.deadlineTime);
-                    const daysLeft = Math.ceil(diffHours / 24);
+                    const { isDueToday } = calculateTimeRemaining(t.deadlineDate, t.deadlineTime);
+                    const daysLeft = calendarDaysUntil(t.deadlineDate);
 
                     return (
                       <div 
@@ -458,7 +458,7 @@ export default function Dashboard({
                             {t.title}
                           </div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', gap: '0.5rem', marginTop: '2px' }}>
-                            <span>{t.category}</span>
+                            <span>{TASK_CATEGORIES.find(c => c.value === t.category)?.label || t.category}</span>
                             <span>•</span>
                             <span>{taskTimeSummary(t).range || taskTimeSummary(t).duration}</span>
                           </div>

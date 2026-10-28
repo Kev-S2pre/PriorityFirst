@@ -18,7 +18,7 @@ import {
   List
 } from 'lucide-react';
 import { calculateTimeRemaining } from '../services/prioritizationEngine';
-import { TASK_CATEGORIES, categoryClassName, taskTimeSummary } from '../data/taskOptions.js';
+import { TASK_CATEGORIES, categoryClassName, taskTimeSummary, calendarDaysUntil } from '../data/taskOptions.js';
 
 export default function TaskManager({
   tasks,
@@ -467,7 +467,11 @@ export default function TaskManager({
                         {task.isOverdue ? (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: 'var(--danger)', fontSize: '0.75rem', fontWeight: 700 }}>
                             <AlertTriangle size={13} />
-                            <span>Overdue by {Math.abs(Math.round(task.diffHours))} hours</span>
+                            <span>
+                              Overdue by {Math.abs(task.diffHours) < 48
+                                ? `${Math.max(1, Math.abs(Math.round(task.diffHours)))} hours`
+                                : `${Math.abs(calendarDaysUntil(task.deadlineDate))} days`}
+                            </span>
                           </span>
                         ) : task.isDueToday ? (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: 'var(--warning)', fontSize: '0.75rem', fontWeight: 700 }}>
@@ -476,7 +480,7 @@ export default function TaskManager({
                           </span>
                         ) : (
                           <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                            {Math.ceil(task.diffHours / 24)} days remaining
+                            {calendarDaysUntil(task.deadlineDate)} {calendarDaysUntil(task.deadlineDate) === 1 ? 'day' : 'days'} remaining
                           </span>
                         )}
                       </div>

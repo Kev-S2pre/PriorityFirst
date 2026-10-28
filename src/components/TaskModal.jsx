@@ -375,7 +375,7 @@ export default function TaskModal({
                   min="0.1"
                   step="0.1"
                   className="form-input"
-                  value={estimatedHours}
+                  value={durationFromTimes(startTime, endTime) ?? estimatedHours}
                   onChange={(e) => setEstimatedHours(e.target.value)}
                   disabled={durationFromTimes(startTime, endTime) !== null}
                 />
