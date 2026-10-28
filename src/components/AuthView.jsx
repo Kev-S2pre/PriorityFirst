@@ -653,12 +653,6 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
           )}
         </div>
 
-        {/* Security / Cryptographic Hashing Notice */}
-        <div style={{ padding: '0.85rem 2rem', background: 'rgba(0,0,0,0.2)', borderTop: '1px solid var(--border-subtle)', textAlign: 'center', fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-          {isCloudEnabled
-            ? <><strong>Cloud Account:</strong> Your tasks are saved automatically and available on any device you sign in to.</>
-            : <><strong>Cryptographic Security:</strong> Passwords are authenticated via salted SHA-256 Web Crypto hashing. Plaintext passwords are never stored.</>}
-        </div>
       </div>
 
       {showTerms && (
