@@ -662,7 +662,7 @@ export default function TaskManager({
               <div style={{ background: 'var(--bg-app)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                   <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)' }}>
-                    PriorityFirst Multi-Criteria Score
+                    PriorityFirst² Multi-Criteria Score
                   </span>
                   <span className={`priority-score-badge ${selectedTaskForDetails.priority?.priorityLevel?.toLowerCase()}`}>
                     {selectedTaskForDetails.priority?.score || 0} / 100 ({selectedTaskForDetails.priority?.priorityLevel || 'Low'})

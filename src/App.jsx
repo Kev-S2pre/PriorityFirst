@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Navbar from './components/Navbar';
 import Dashboard from './components/Dashboard';
 import TaskManager from './components/TaskManager';
@@ -12,6 +12,7 @@ import ConfirmModal from './components/ConfirmModal';
 
 import { storageService, DEFAULT_WEIGHTS } from './services/storageService';
 import { authService } from './services/authService';
+import { cloudSync, isCloudEnabled } from './services/cloudSync';
 import { prioritizeTasks } from './services/prioritizationEngine';
 import { 
   generateNotifications, 
@@ -71,6 +72,132 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', settings.theme || 'dark');
   }, [settings.theme]);
 
+  // ---- Cloud auto-save (Supabase) ----
+  // syncStatus: 'local' (no cloud configured) | 'loading' | 'saving' | 'saved' | 'offline'
+  const [syncStatus, setSyncStatus] = useState(isCloudEnabled ? 'loading' : 'local');
+  const cloudReadyRef = useRef(false);      // this user's cloud data has been loaded
+  const baselineTasksRef = useRef(tasks);   // tasks as last loaded, to spot edits made before loading finished
+  const localDirtyRef = useRef(false);      // edits made while offline / before loading, not yet uploaded
+  const pendingPushRef = useRef(false);     // a save is queued or in flight
+  const lastLoadRef = useRef(0);
+  const tasksRef = useRef(tasks);
+  tasksRef.current = tasks;
+
+  const loadFromCloud = useCallback(async (user) => {
+    if (!isCloudEnabled || !user) return;
+    cloudReadyRef.current = false;
+    lastLoadRef.current = Date.now();
+    setSyncStatus('loading');
+    try {
+      const { tasks: cloudTasks, settings: cloudSettings } = await cloudSync.pull(user.id);
+      const normalizedCloud = storageService.saveTasks(cloudTasks, user.id);
+      cloudSync.markSynced(user.id, normalizedCloud);
+
+      let nextTasks = normalizedCloud;
+      const migratedKey = `priorityfirst_cloud_migrated_${user.id}`;
+      if (localDirtyRef.current) {
+        // Keep edits made while offline: local versions win, cloud-only tasks are kept
+        const merged = new Map(normalizedCloud.map(t => [t.id, t]));
+        tasksRef.current.forEach(t => merged.set(t.id, t));
+        nextTasks = storageService.saveTasks([...merged.values()], user.id);
+      } else if (normalizedCloud.length === 0 && !localStorage.getItem(migratedKey)) {
+        // First cloud sign-in: bring over tasks from an older account saved in this browser
+        const { tasks: legacyTasks } = authService.getLocalTasksForEmail(user.email);
+        if (legacyTasks.length > 0) {
+          nextTasks = storageService.saveTasks(legacyTasks, user.id);
+          showToast(`Moved ${nextTasks.length} tasks from this device into your account`, 'success');
+        }
+      }
+      localStorage.setItem(migratedKey, 'true');
+
+      if (nextTasks !== normalizedCloud) {
+        await cloudSync.pushTasks(user.id, nextTasks);
+      }
+      localDirtyRef.current = false;
+      baselineTasksRef.current = nextTasks;
+      setTasks(nextTasks);
+
+      if (cloudSettings) {
+        setSettings(storageService.saveSettings(cloudSettings));
+      } else {
+        await cloudSync.pushSettings(user.id, storageService.getSettings());
+      }
+
+      cloudReadyRef.current = true;
+      setSyncStatus('saved');
+    } catch (err) {
+      console.error('Cloud load failed:', err);
+      setSyncStatus('offline');
+    }
+  }, [showToast]);
+
+  // Re-check the saved session and load this user's cloud data on app start
+  useEffect(() => {
+    if (!isCloudEnabled || !currentUser) return;
+    authService.restoreSession().then(user => {
+      if (!user) {
+        setCurrentUser(null);
+        setTasks([]);
+        showToast('Your session has ended. Please sign in again.', 'info');
+        return;
+      }
+      setCurrentUser(user);
+      loadFromCloud(user);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-save tasks shortly after every change
+  useEffect(() => {
+    if (!isCloudEnabled || !currentUser) return undefined;
+    if (!cloudReadyRef.current) {
+      if (tasks !== baselineTasksRef.current) localDirtyRef.current = true;
+      return undefined;
+    }
+    pendingPushRef.current = true;
+    const timer = setTimeout(async () => {
+      setSyncStatus('saving');
+      try {
+        await cloudSync.pushTasks(currentUser.id, tasks);
+        setSyncStatus('saved');
+      } catch (err) {
+        console.error('Cloud save failed:', err);
+        // Keep the change locally and upload it when the connection returns
+        cloudReadyRef.current = false;
+        localDirtyRef.current = true;
+        setSyncStatus('offline');
+      } finally {
+        pendingPushRef.current = false;
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [tasks, currentUser]);
+
+  // Auto-save settings (theme, weights, preferences) to the user's account
+  useEffect(() => {
+    if (!isCloudEnabled || !currentUser || !cloudReadyRef.current) return undefined;
+    const timer = setTimeout(() => {
+      cloudSync.pushSettings(currentUser.id, settings).catch(err => console.error('Settings sync failed:', err));
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [settings, currentUser]);
+
+  // Pick up changes from other devices when returning to the app or coming back online
+  useEffect(() => {
+    if (!isCloudEnabled || !currentUser) return undefined;
+    const refresh = () => {
+      if (document.visibilityState !== 'visible' || pendingPushRef.current) return;
+      if (cloudReadyRef.current && Date.now() - lastLoadRef.current < 30000) return;
+      loadFromCloud(currentUser);
+    };
+    window.addEventListener('focus', refresh);
+    window.addEventListener('online', refresh);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('online', refresh);
+    };
+  }, [currentUser, loadFromCloud]);
+
   useEffect(() => {
     if (!currentUser) return undefined;
     return startReminderScheduler(tasks, settings, (task) => {
@@ -102,13 +229,22 @@ export default function App() {
 
   // Authentication Session Handlers
   const handleAuthSuccess = (user) => {
+    const cachedTasks = storageService.getTasks(user.id);
+    cloudReadyRef.current = false;
+    localDirtyRef.current = false;
+    baselineTasksRef.current = cachedTasks;
     setCurrentUser(user);
-    setTasks(storageService.getTasks(user.id));
+    setTasks(cachedTasks);
     setActiveTab('dashboard');
     showToast(`Welcome back, ${user.name}!`, 'success');
+    loadFromCloud(user);
   };
 
   const handleLogout = () => {
+    if (currentUser) cloudSync.forget(currentUser.id);
+    cloudReadyRef.current = false;
+    localDirtyRef.current = false;
+    setSyncStatus(isCloudEnabled ? 'loading' : 'local');
     authService.logout();
     setCurrentUser(null);
     showToast('Logged out of session', 'info');
@@ -199,12 +335,12 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `PriorityFirst_Backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `PriorityFirst2_Backup_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showToast('Exported PriorityFirst backup file', 'success');
+    showToast('Exported PriorityFirst² backup file', 'success');
   };
 
   const handleImportBackup = (jsonString) => {
@@ -239,7 +375,7 @@ export default function App() {
   const handleClearAllTasks = () => {
     const cleared = storageService.clearAllTasks(currentUser?.id);
     setTasks(cleared);
-    showToast('All tasks cleared from local storage', 'info');
+    showToast('All tasks cleared', 'info');
   };
 
   return (
@@ -257,6 +393,7 @@ export default function App() {
         onToggleTheme={handleToggleTheme}
         tasksCount={tasks.length}
         currentUser={currentUser}
+        syncStatus={syncStatus}
         onLogout={handleLogout}
       />
 

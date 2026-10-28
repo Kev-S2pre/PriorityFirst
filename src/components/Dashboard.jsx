@@ -94,7 +94,7 @@ export default function Dashboard({
       <div className="dashboard-hero">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div className="hero-welcome">
-            <h1>PriorityFirst Overview</h1>
+            <h1>PriorityFirst² Overview</h1>
             <p>
               Real-time analysis and multi-criteria prioritization for studies, work, training, and personal responsibilities.
             </p>

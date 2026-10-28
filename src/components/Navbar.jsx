@@ -14,7 +14,9 @@ import {
   Clock,
   X,
   LogOut,
-  User
+  Cloud,
+  CloudOff,
+  RefreshCw
 } from 'lucide-react';
 import ConfirmModal from './ConfirmModal.jsx';
 
@@ -27,8 +29,15 @@ export default function Navbar({
   onToggleTheme,
   tasksCount,
   currentUser,
+  syncStatus = 'local',
   onLogout
 }) {
+  const syncInfo = {
+    loading: { icon: RefreshCw, color: 'var(--text-muted)', label: 'Loading your saved work…', spin: true },
+    saving: { icon: RefreshCw, color: 'var(--text-muted)', label: 'Saving to your account…', spin: true },
+    saved: { icon: Cloud, color: 'var(--success)', label: 'All changes saved to your account' },
+    offline: { icon: CloudOff, color: 'var(--warning)', label: 'Offline — changes are kept on this device and will sync when you reconnect' }
+  }[syncStatus];
   const [showNotifications, setShowNotifications] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const popoverRef = useRef(null);
@@ -51,13 +60,13 @@ export default function Navbar({
       <div className="navbar-inner">
         {/* Brand Logo & Name */}
         <div className="brand-section">
-          <div className="brand-logo-icon" title="PriorityFirst">
+          <div className="brand-logo-icon" title="PriorityFirst²">
             <CheckCircle2 size={22} strokeWidth={2.5} />
           </div>
           <div className="brand-title-wrap">
             <div className="brand-name">
-              PriorityFirst
-              <span className="brand-badge">PF</span>
+              PriorityFirst²
+              <span className="brand-badge">PF²</span>
             </div>
             <span className="brand-subtitle">Time-Management & Task Prioritization</span>
           </div>
@@ -120,6 +129,21 @@ export default function Navbar({
 
         {/* Action Buttons */}
         <div className="navbar-actions">
+          {/* Cloud save status (Protected) */}
+          {currentUser && syncInfo && (
+            <span
+              className="sync-status"
+              title={syncInfo.label}
+              aria-label={syncInfo.label}
+              role="status"
+              id="sync-status"
+              data-status={syncStatus}
+              style={{ color: syncInfo.color }}
+            >
+              <syncInfo.icon size={17} className={syncInfo.spin ? 'spin' : ''} />
+            </span>
+          )}
+
           {/* Notifications Bell (Protected) */}
           {currentUser && (
             <div style={{ position: 'relative' }} ref={popoverRef}>

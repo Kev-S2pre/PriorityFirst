@@ -13,6 +13,9 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { authService } from '../services/authService.js';
+import { isCloudEnabled } from '../services/cloudSync.js';
+import InstitutionFields from './InstitutionFields.jsx';
+import { defaultInstitutionType, isValidDepartment } from '../data/profileOptions.js';
 
 export default function AuthView({ onAuthSuccess }) {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
@@ -30,6 +33,8 @@ export default function AuthView({ onAuthSuccess }) {
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regDepartment, setRegDepartment] = useState('');
   const [regInstitution, setRegInstitution] = useState('');
+  const [regInstitutionId, setRegInstitutionId] = useState('');
+  const [regInstitutionType, setRegInstitutionType] = useState('school');
   const [regClassification, setRegClassification] = useState('Student');
   const [regOtherDescription, setRegOtherDescription] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
@@ -109,6 +114,8 @@ export default function AuthView({ onAuthSuccess }) {
         password: regPassword,
         confirmPassword: regConfirmPassword,
         institution: regInstitution,
+        institutionId: regInstitutionId,
+        institutionType: regInstitutionType,
         department: regDepartment,
         classification: regClassification,
         otherDescription: regOtherDescription
@@ -116,7 +123,9 @@ export default function AuthView({ onAuthSuccess }) {
 
       // MANDATORY REQUIREMENT: Do NOT automatically log in after registration!
       // Display confirmation and switch to login page for manual authentication.
-      setSuccessMessage('Registration successful! Please enter your credentials to sign in.');
+      setSuccessMessage(result.needsConfirmation
+        ? result.message
+        : 'Registration successful! Please enter your credentials to sign in.');
       setLoginEmail(regEmail);
       setLoginPassword('');
       setMode('login');
@@ -128,6 +137,8 @@ export default function AuthView({ onAuthSuccess }) {
       setRegConfirmPassword('');
       setRegDepartment('');
       setRegInstitution('');
+      setRegInstitutionId('');
+      setRegInstitutionType('school');
       setRegClassification('Student');
       setRegOtherDescription('');
       setFieldErrors({});
@@ -158,7 +169,7 @@ export default function AuthView({ onAuthSuccess }) {
           </div>
 
           <h1 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
-            PriorityFirst <span className="brand-badge">PF</span>
+            PriorityFirst² <span className="brand-badge">PF²</span>
           </h1>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
             Task prioritization and scheduling for everyday life
@@ -322,53 +333,46 @@ export default function AuthView({ onAuthSuccess }) {
                 {fieldErrors.email && <span className="form-error">{fieldErrors.email}</span>}
               </div>
 
-              <div className="form-row-2">
-                <div className="form-group">
-                  <label className="form-label" htmlFor="reg-classification">
-                    Primary classification
-                  </label>
-                  <select 
-                    id="reg-classification"
-                    className="form-select"
-                    value={regClassification}
-                    onChange={(e) => setRegClassification(e.target.value)}
-                  >
-                    <option value="Student">Student</option>
-                    <option value="Professional">Professional</option>
-                    <option value="Worker">Worker</option>
-                    <option value="Athlete">Athlete</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label" htmlFor="reg-institution">
-                    Institution / organization (optional)
-                  </label>
-                  <input 
-                    id="reg-institution"
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. University or workplace"
-                    value={regInstitution}
-                    onChange={(e) => setRegInstitution(e.target.value)}
-                  />
-                </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="reg-classification">
+                  Primary classification
+                </label>
+                <select
+                  id="reg-classification"
+                  className="form-select"
+                  value={regClassification}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setRegClassification(next);
+                    // Suggest the usual institution type and drop a course/sport that no longer fits
+                    if (!regInstitution) setRegInstitutionType(defaultInstitutionType(next));
+                    if (!isValidDepartment(regDepartment, regInstitutionType, next)) setRegDepartment('');
+                  }}
+                >
+                  <option value="Student">Student</option>
+                  <option value="Professional">Professional</option>
+                  <option value="Worker">Worker</option>
+                  <option value="Athlete">Athlete</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
 
-              {regClassification === 'Student' && (
-                <div className="form-group">
-                  <label className="form-label" htmlFor="reg-department">Course / program (optional)</label>
-                  <input
-                    id="reg-department"
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. Mechanical Engineering, Arts, Nursing"
-                    value={regDepartment}
-                    onChange={(e) => setRegDepartment(e.target.value)}
-                  />
-                </div>
-              )}
+              <InstitutionFields
+                idPrefix="reg"
+                classification={regClassification}
+                value={{
+                  institutionType: regInstitutionType,
+                  institution: regInstitution,
+                  institutionId: regInstitutionId,
+                  department: regDepartment
+                }}
+                onChange={(next) => {
+                  setRegInstitutionType(next.institutionType);
+                  setRegInstitution(next.institution);
+                  setRegInstitutionId(next.institutionId);
+                  setRegDepartment(next.department);
+                }}
+              />
 
               {regClassification === 'Other' && (
                 <div className="form-group">
@@ -455,7 +459,9 @@ export default function AuthView({ onAuthSuccess }) {
 
         {/* Security / Cryptographic Hashing Notice */}
         <div style={{ padding: '0.85rem 2rem', background: 'rgba(0,0,0,0.2)', borderTop: '1px solid var(--border-subtle)', textAlign: 'center', fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-          <strong>Cryptographic Security:</strong> Passwords are authenticated via salted SHA-256 Web Crypto hashing. Plaintext passwords are never stored.
+          {isCloudEnabled
+            ? <><strong>Cloud Account:</strong> Your tasks are saved automatically and available on any device you sign in to.</>
+            : <><strong>Cryptographic Security:</strong> Passwords are authenticated via salted SHA-256 Web Crypto hashing. Plaintext passwords are never stored.</>}
         </div>
       </div>
     </div>

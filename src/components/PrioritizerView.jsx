@@ -58,7 +58,7 @@ export default function PrioritizerView({
       <div style={{ marginBottom: '1.5rem' }}>
         <h1 style={{ fontSize: '1.85rem', fontWeight: 800, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <Sliders size={26} style={{ color: 'var(--primary)' }} />
-          <span>PriorityFirst Transparent Prioritization Engine</span>
+          <span>PriorityFirst² Transparent Prioritization Engine</span>
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
           Multi-criteria decision analysis recommending the optimal order to tackle coursework, laboratory activities, and projects.

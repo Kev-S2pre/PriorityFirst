@@ -188,7 +188,7 @@ export default function TaskModal({
         <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
             <h2 className="modal-title">
-              {taskToEdit ? 'Edit Task' : 'Create New PriorityFirst Task'}
+              {taskToEdit ? 'Edit Task' : 'Create New PriorityFirst² Task'}
             </h2>
             <button 
               className="action-icon-btn" 
@@ -342,7 +342,7 @@ export default function TaskModal({
                 onChange={(e) => setReminderAt(e.target.value)}
               />
               {errors.reminderAt && <span className="form-error">{errors.reminderAt}</span>}
-              <span className="form-hint">If blank, PriorityFirst reminds you at the deadline. Desktop permissions are required.</span>
+              <span className="form-hint">If blank, PriorityFirst² reminds you at the deadline. Desktop permissions are required.</span>
             </div>
 
             {/* Difficulty, Estimated Hours, Importance */}

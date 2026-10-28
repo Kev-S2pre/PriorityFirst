@@ -22,6 +22,9 @@ import {
 } from 'lucide-react';
 import { browserNotificationService, playNotificationSound } from '../services/notificationService';
 import { authService } from '../services/authService';
+import { isCloudEnabled } from '../services/cloudSync';
+import InstitutionFields from './InstitutionFields';
+import { defaultInstitutionType, isValidDepartment } from '../data/profileOptions';
 
 const SECTIONS = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -39,6 +42,8 @@ function profileFromUser(user) {
     name: user?.name || '',
     email: user?.email || '',
     institution: user?.institution || '',
+    institutionId: user?.institutionId || '',
+    institutionType: user?.institutionType || defaultInstitutionType(user?.classification || user?.role),
     department: user?.department || '',
     classification: user?.classification || user?.role || 'Student',
     otherDescription: user?.otherDescription || ''
@@ -150,7 +155,12 @@ export default function SettingsModal({
     try {
       const updated = await authService.updateProfile(currentUser.id, profile);
       onProfileUpdated(updated);
-      setProfileStatus({ type: 'success', message: 'Profile saved.' });
+      setProfileStatus({
+        type: 'success',
+        message: updated.pendingEmail && updated.pendingEmail !== updated.email
+          ? `Profile saved. Click the link sent to ${updated.pendingEmail} to finish changing your email.`
+          : 'Profile saved.'
+      });
     } catch (err) {
       setProfileStatus({ type: 'error', message: err.message });
     } finally {
@@ -172,16 +182,16 @@ export default function SettingsModal({
     }
     try {
       const avatar = await resizeImageFile(file);
-      onProfileUpdated(authService.updateAvatar(currentUser.id, avatar));
+      onProfileUpdated(await authService.updateAvatar(currentUser.id, avatar));
       setProfileStatus({ type: 'success', message: 'Profile picture updated.' });
     } catch (err) {
       setProfileStatus({ type: 'error', message: err.message });
     }
   };
 
-  const handleAvatarRemove = () => {
+  const handleAvatarRemove = async () => {
     try {
-      onProfileUpdated(authService.updateAvatar(currentUser.id, ''));
+      onProfileUpdated(await authService.updateAvatar(currentUser.id, ''));
       setProfileStatus({ type: 'success', message: 'Profile picture removed.' });
     } catch (err) {
       setProfileStatus({ type: 'error', message: err.message });
@@ -210,7 +220,7 @@ export default function SettingsModal({
     const result = await browserNotificationService.requestPermission();
     if (result === 'granted') {
       onUpdateSettings({ browserNotificationsEnabled: true });
-      browserNotificationService.send('PriorityFirst Notifications Active', {
+      browserNotificationService.send('PriorityFirst² Notifications Active', {
         body: 'You will receive reminders for approaching and due deadlines.'
       });
     } else {
@@ -337,24 +347,17 @@ export default function SettingsModal({
 
                 <div className="form-row-2">
                   <div className="form-group">
-                    <label className="form-label" htmlFor="profile-institution">Institution / Organization</label>
-                    <input id="profile-institution" className="form-input" value={profile.institution}
-                      placeholder="e.g. State University"
-                      onChange={(e) => setProfile({ ...profile, institution: e.target.value })} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="profile-department">Department / Team</label>
-                    <input id="profile-department" className="form-input" value={profile.department}
-                      placeholder="e.g. Mechanical Engineering"
-                      onChange={(e) => setProfile({ ...profile, department: e.target.value })} />
-                  </div>
-                </div>
-
-                <div className="form-row-2">
-                  <div className="form-group">
                     <label className="form-label" htmlFor="profile-classification">I am a</label>
                     <select id="profile-classification" className="form-select" value={profile.classification}
-                      onChange={(e) => setProfile({ ...profile, classification: e.target.value })}>
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        setProfile({
+                          ...profile,
+                          classification: next,
+                          institutionType: profile.institution ? profile.institutionType : defaultInstitutionType(next),
+                          department: isValidDepartment(profile.department, profile.institutionType, next) ? profile.department : ''
+                        });
+                      }}>
                       {CLASSIFICATIONS.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
@@ -366,6 +369,19 @@ export default function SettingsModal({
                     </div>
                   )}
                 </div>
+
+                <InstitutionFields
+                  key={String(isOpen)}
+                  idPrefix="profile"
+                  classification={profile.classification}
+                  value={profile}
+                  onChange={(next) => setProfile({ ...profile, ...next })}
+                />
+                {original.institution && !original.institutionId && profile.institution === original.institution && (
+                  <span className="form-hint" style={{ color: 'var(--warning)' }}>
+                    “{original.institution}” isn't verified. Search and pick your institution above, or set the type to None.
+                  </span>
+                )}
 
                 {statusMessage(profileStatus)}
 
@@ -384,7 +400,11 @@ export default function SettingsModal({
 
             {section === 'security' && (
               <form onSubmit={handlePasswordSave} className="settings-stack">
-                <p className="form-hint">Passwords are stored as salted SHA-256 hashes on this device.</p>
+                <p className="form-hint">
+                  {isCloudEnabled
+                    ? 'Your password is managed securely by your PriorityFirst² cloud account.'
+                    : 'Passwords are stored as salted SHA-256 hashes on this device.'}
+                </p>
                 <div className="form-group">
                   <label className="form-label" htmlFor="pw-current">Current Password</label>
                   <input id="pw-current" type="password" className="form-input" autoComplete="current-password"
@@ -442,7 +462,7 @@ export default function SettingsModal({
                 <SettingRow
                   icon={Bell}
                   title="Desktop Notifications"
-                  description={`Browser permission: ${notificationPermission}. Reminders run while PriorityFirst is open.`}
+                  description={`Browser permission: ${notificationPermission}. Reminders run while PriorityFirst² is open.`}
                 >
                   <Toggle
                     label="Desktop notifications"
@@ -498,10 +518,12 @@ export default function SettingsModal({
                 <div style={{ background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.875rem', color: 'var(--primary)', marginBottom: '0.35rem' }}>
                     <ShieldCheck size={18} />
-                    <span>Stored on this device</span>
+                    <span>{isCloudEnabled ? 'Saved to your cloud account' : 'Stored on this device'}</span>
                   </div>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                    {tasksCount} tasks are saved in this browser's local storage. Data stays private to this device and is not synced automatically; use a backup to move it.
+                    {isCloudEnabled
+                      ? `${tasksCount} tasks are saved automatically to your account and are available on any device you sign in to. Only you can see them.`
+                      : `${tasksCount} tasks are saved in this browser's local storage. Data stays private to this device and is not synced automatically; use a backup to move it.`}
                   </p>
                 </div>
 

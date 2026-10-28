@@ -185,7 +185,7 @@ export function startReminderScheduler(tasks, settings, onReminder) {
       const delay = now - dueAt.getTime();
       if (delay < 0 || delay > REMINDER_GRACE_MS || delivered[signature]) return;
 
-      const notification = browserNotificationService.send('PriorityFirst reminder', {
+      const notification = browserNotificationService.send('PriorityFirst² reminder', {
         body: `"${task.title}" is scheduled now.`,
         tag: `priorityfirst-${signature}`,
         renotify: false
