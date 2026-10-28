@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, AlertCircle, Clock, Calendar } from 'lucide-react';
 import { TASK_CATEGORIES, durationFromTimes, formatDuration, formatTime } from '../data/taskOptions.js';
+import ConfirmModal from './ConfirmModal.jsx';
 
 export default function TaskModal({
   isOpen,
@@ -23,51 +24,103 @@ export default function TaskModal({
   const [status, setStatus] = useState('pending');
   const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState({});
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  // Initial state tracking to detect unsaved changes
+  const [initialFormState, setInitialFormState] = useState(null);
 
   useEffect(() => {
+    let initialValues;
     if (taskToEdit) {
-      setTitle(taskToEdit.title || '');
-      setDescription(taskToEdit.description || '');
-      setCategory(taskToEdit.category || 'assignment');
-      setDeadlineDate(taskToEdit.deadlineDate || '');
-      setDeadlineTime(taskToEdit.deadlineTime || '23:59');
-      setDifficulty(Number(taskToEdit.difficulty) || 3);
-      setEstimatedHours(Number(taskToEdit.estimatedHours) || 2.0);
-      setStartTime(taskToEdit.startTime || taskToEdit.scheduledStartTime || '');
-      setEndTime(taskToEdit.endTime || '');
-      setReminderAt(taskToEdit.reminderAt || '');
-      setImportance(taskToEdit.importance || 'Medium');
-      setStatus(taskToEdit.status || 'pending');
-      setNotes(taskToEdit.notes || '');
+      initialValues = {
+        title: taskToEdit.title || '',
+        description: taskToEdit.description || '',
+        category: taskToEdit.category || 'assignment',
+        deadlineDate: taskToEdit.deadlineDate || '',
+        deadlineTime: taskToEdit.deadlineTime || '23:59',
+        difficulty: Number(taskToEdit.difficulty) || 3,
+        estimatedHours: Number(taskToEdit.estimatedHours) || 2.0,
+        startTime: taskToEdit.startTime || taskToEdit.scheduledStartTime || '',
+        endTime: taskToEdit.endTime || '',
+        reminderAt: taskToEdit.reminderAt || '',
+        importance: taskToEdit.importance || 'Medium',
+        status: taskToEdit.status || 'pending',
+        notes: taskToEdit.notes || ''
+      };
     } else {
-      // Default new task setup
-      setTitle('');
-      setDescription('');
-      setCategory('assignment');
-      
+      let defaultDate = '';
       if (initialDate) {
-        setDeadlineDate(initialDate);
+        defaultDate = initialDate;
       } else {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         const yyyy = tomorrow.getFullYear();
         const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
         const dd = String(tomorrow.getDate()).padStart(2, '0');
-        setDeadlineDate(`${yyyy}-${mm}-${dd}`);
+        defaultDate = `${yyyy}-${mm}-${dd}`;
       }
-      
-      setDeadlineTime('23:59');
-      setDifficulty(3);
-      setEstimatedHours(2.0);
-      setStartTime('');
-      setEndTime('');
-      setReminderAt('');
-      setImportance('Medium');
-      setStatus('pending');
-      setNotes('');
+
+      initialValues = {
+        title: '',
+        description: '',
+        category: 'assignment',
+        deadlineDate: defaultDate,
+        deadlineTime: '23:59',
+        difficulty: 3,
+        estimatedHours: 2.0,
+        startTime: '',
+        endTime: '',
+        reminderAt: '',
+        importance: 'Medium',
+        status: 'pending',
+        notes: ''
+      };
     }
+
+    setTitle(initialValues.title);
+    setDescription(initialValues.description);
+    setCategory(initialValues.category);
+    setDeadlineDate(initialValues.deadlineDate);
+    setDeadlineTime(initialValues.deadlineTime);
+    setDifficulty(initialValues.difficulty);
+    setEstimatedHours(initialValues.estimatedHours);
+    setStartTime(initialValues.startTime);
+    setEndTime(initialValues.endTime);
+    setReminderAt(initialValues.reminderAt);
+    setImportance(initialValues.importance);
+    setStatus(initialValues.status);
+    setNotes(initialValues.notes);
+    setInitialFormState(initialValues);
     setErrors({});
+    setShowDiscardConfirm(false);
   }, [taskToEdit, isOpen, initialDate]);
+
+  const hasUnsavedChanges = () => {
+    if (!initialFormState) return false;
+    return (
+      title !== initialFormState.title ||
+      description !== initialFormState.description ||
+      category !== initialFormState.category ||
+      deadlineDate !== initialFormState.deadlineDate ||
+      deadlineTime !== initialFormState.deadlineTime ||
+      Number(difficulty) !== Number(initialFormState.difficulty) ||
+      Number(estimatedHours) !== Number(initialFormState.estimatedHours) ||
+      startTime !== initialFormState.startTime ||
+      endTime !== initialFormState.endTime ||
+      reminderAt !== initialFormState.reminderAt ||
+      importance !== initialFormState.importance ||
+      status !== initialFormState.status ||
+      notes !== initialFormState.notes
+    );
+  };
+
+  const handleRequestClose = () => {
+    if (hasUnsavedChanges()) {
+      setShowDiscardConfirm(true);
+    } else {
+      onClose();
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -114,22 +167,23 @@ export default function TaskModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-title">
-            {taskToEdit ? 'Edit Task' : 'Create New PriorityFirst Task'}
-          </h2>
-          <button 
-            className="action-icon-btn" 
-            onClick={onClose}
-            aria-label="Close modal"
-          >
-            <X size={18} />
-          </button>
-        </div>
+    <>
+      <div className="modal-overlay" onClick={handleRequestClose} role="dialog" aria-modal="true">
+        <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h2 className="modal-title">
+              {taskToEdit ? 'Edit Task' : 'Create New PriorityFirst Task'}
+            </h2>
+            <button 
+              className="action-icon-btn" 
+              onClick={handleRequestClose}
+              aria-label="Close modal"
+            >
+              <X size={18} />
+            </button>
+          </div>
 
-        <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit}>
           <div className="modal-body">
             {/* Title */}
             <div className="form-group">
@@ -347,7 +401,7 @@ export default function TaskModal({
             <button 
               type="button" 
               className="btn-secondary" 
-              onClick={onClose}
+              onClick={handleRequestClose}
             >
               Cancel
             </button>
@@ -363,5 +417,20 @@ export default function TaskModal({
         </form>
       </div>
     </div>
+
+    <ConfirmModal 
+      isOpen={showDiscardConfirm}
+      title="Discard Unsaved Changes?"
+      message="You have unsaved changes in this task. Are you sure you want to cancel and lose them?"
+      confirmText="Discard Changes"
+      cancelText="Keep Editing"
+      confirmVariant="danger"
+      onConfirm={() => {
+        setShowDiscardConfirm(false);
+        onClose();
+      }}
+      onCancel={() => setShowDiscardConfirm(false)}
+    />
+  </>
   );
 }

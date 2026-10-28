@@ -17,6 +17,7 @@ import {
   LogOut,
   User
 } from 'lucide-react';
+import ConfirmModal from './ConfirmModal.jsx';
 
 export default function Navbar({
   activeTab,
@@ -31,6 +32,7 @@ export default function Navbar({
   onLogout
 }) {
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const popoverRef = useRef(null);
 
   // Close notifications on click outside
@@ -273,7 +275,7 @@ export default function Navbar({
 
               <button 
                 className="icon-btn"
-                onClick={onLogout}
+                onClick={() => setShowLogoutConfirm(true)}
                 title="Log Out of Session"
                 id="btn-logout"
                 aria-label="Log Out"
@@ -285,6 +287,22 @@ export default function Navbar({
           )}
         </div>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <ConfirmModal 
+        isOpen={showLogoutConfirm}
+        title="Sign Out of Session?"
+        message="Are you sure you want to log out? Your session will end and you will return to the login screen."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        confirmVariant="danger"
+        icon={LogOut}
+        onConfirm={() => {
+          setShowLogoutConfirm(false);
+          onLogout();
+        }}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
     </header>
   );
 }

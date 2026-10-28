@@ -8,6 +8,7 @@ import AnalyticsView from './components/AnalyticsView';
 import TaskModal from './components/TaskModal';
 import SettingsModal from './components/SettingsModal';
 import AuthView from './components/AuthView';
+import ConfirmModal from './components/ConfirmModal';
 
 import { storageService, DEFAULT_WEIGHTS } from './services/storageService';
 import { authService } from './services/authService';
@@ -31,6 +32,17 @@ export default function App() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
+  // Reusable confirmation modal state
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    confirmVariant: 'primary',
+    onConfirm: null
+  });
 
   // Transient Toast Notification
   const [toast, setToast] = useState(null);
@@ -123,11 +135,20 @@ export default function App() {
   };
 
   const handleDeleteTask = (id, title) => {
-    if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
-      storageService.deleteTask(id, currentUser?.id);
-      setTasks(storageService.getTasks(currentUser?.id));
-      showToast(`Task "${title}" removed`, 'info');
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Delete Task?',
+      message: `Are you sure you want to delete "${title}"? This action cannot be undone.`,
+      confirmText: 'Delete Task',
+      cancelText: 'Cancel',
+      confirmVariant: 'danger',
+      onConfirm: () => {
+        storageService.deleteTask(id, currentUser?.id);
+        setTasks(storageService.getTasks(currentUser?.id));
+        showToast(`Task "${title}" removed`, 'info');
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   const handleToggleComplete = (id) => {
@@ -190,11 +211,20 @@ export default function App() {
   };
 
   const handleResetSampleData = () => {
-    if (window.confirm('Reset current tasks to the standard Engineering Student sample dataset?')) {
-      const samples = storageService.loadSampleData(currentUser?.id);
-      setTasks(samples);
-      showToast('Restored engineering coursework sample tasks', 'success');
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Load Engineering Sample Tasks?',
+      message: 'Reset current tasks and load the standard Engineering Student sample dataset? Any unsaved custom tasks might be overwritten or supplemented.',
+      confirmText: 'Load Samples',
+      cancelText: 'Cancel',
+      confirmVariant: 'primary',
+      onConfirm: () => {
+        const samples = storageService.loadSampleData(currentUser?.id);
+        setTasks(samples);
+        showToast('Restored engineering coursework sample tasks', 'success');
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   const handleClearAllTasks = () => {
@@ -300,6 +330,18 @@ export default function App() {
           setSettings(updated);
         }}
         tasksCount={tasks.length}
+      />
+
+      {/* Global Confirmation Dialog */}
+      <ConfirmModal 
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        cancelText={confirmDialog.cancelText}
+        confirmVariant={confirmDialog.confirmVariant}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
       />
 
       {/* Transient Notification Toast */}
