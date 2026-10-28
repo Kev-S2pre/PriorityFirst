@@ -252,7 +252,7 @@ export default function Navbar({
                     width: '24px', 
                     height: '24px', 
                     borderRadius: 'var(--radius-full)', 
-                    background: currentUser.isDemo ? 'var(--primary-gradient)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+                    background: 'var(--primary-gradient)', 
                     color: '#ffffff', 
                     display: 'flex', 
                     alignItems: 'center', 
@@ -266,11 +266,6 @@ export default function Navbar({
                 <span style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {currentUser.name.split(' ')[0]}
                 </span>
-                {currentUser.isDemo && (
-                  <span style={{ fontSize: '0.65rem', padding: '1px 5px', borderRadius: 'var(--radius-full)', background: 'var(--primary-light)', color: 'var(--primary)', fontWeight: 700 }}>
-                    DEMO
-                  </span>
-                )}
               </div>
 
               <button 

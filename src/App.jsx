@@ -93,12 +93,7 @@ export default function App() {
     setCurrentUser(user);
     setTasks(storageService.getTasks(user.id));
     setActiveTab('dashboard');
-    showToast(
-      user.isDemo 
-        ? `Logged in as Demo User (${user.name})` 
-        : `Welcome back, ${user.name}!`,
-      'success'
-    );
+    showToast(`Welcome back, ${user.name}!`, 'success');
   };
 
   const handleLogout = () => {

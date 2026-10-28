@@ -19,12 +19,11 @@ Every prioritized recommendation provides a **plain-English rationale** explaini
 
 ## 2. Core Features
 
-### A. Authentication & Simulated Session Gate
+### A. Authentication & User Session Gate
 - **Protected Navigation:** Unauthenticated visitors are presented with the authentication portal; the dashboard and scheduling views remain protected until login.
-- **"Continue as Demo User" (1-Click):** Designed for quick academic and faculty presentations. Instantly initializes a session for `Alex Rivera (Engineering Student)` without requiring manual credentials.
-- **Student Registration:** Supports registering new student accounts with full name, academic email, department/program, institution, and password validation.
-- **Student Sign In:** Validates email and password against simulated registered student records.
-- **Logout:** Clears the active session and redirects immediately to the sign-in portal.
+- **User Registration:** Supports registering accounts with full name, email, department/program, institution, classification, and secure salted hashing.
+- **User Sign In:** Validates email and password securely against registered user credentials using Web Crypto API.
+- **Logout:** Clears the active session after confirmation and returns immediately to the sign-in portal.
 - **Data Preservation Guarantee:** Authentication states are isolated in `priorityfirst_auth_session_v1` and do not alter or overwrite existing task and scheduling data.
 - **Transparency Notice:** Prominently identifies the frontend simulation mode and reminds users not to enter real-world production passwords.
 

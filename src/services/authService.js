@@ -3,8 +3,7 @@
  * Secure Client-Side Cryptographic Authentication with Web Crypto API
  * - SHA-256 salted hashing (Zero plaintext password storage)
  * - Isolated user sessions
- * - Verified test account pre-seeded
- * - Strict credential verification (No automatic login, no bypasses)
+ * - Strict credential verification (No bypasses, real user accounts only)
  */
 
 const AUTH_SESSION_KEY = 'priorityfirst_session_v2';
@@ -40,44 +39,15 @@ export async function hashPassword(password, salt) {
   return 'fallback_' + Math.abs(hash).toString(16);
 }
 
-// Verified Pre-Seeded Test Account
-export const VERIFIED_TEST_ACCOUNT = {
-  id: 'user_test_student_01',
-  name: 'Alex Rivera',
-  email: 'test.student@priorityfirst.edu',
-  rawPassword: 'Password123!', // Displayed in test instructions
-  salt: '8f7e6d5c4b3a2918',
-  passwordHash: '89a81f3322d718ec49767a57a1e05a8b417c8008e7c10b2df76a02b78112e401', // Precomputed for instant readiness
-  institution: 'Faculty of Engineering & Technology',
-  department: 'Civil & Mechanical Engineering',
-  role: 'Engineering Student',
-  createdAt: '2026-10-19T00:00:00.000Z'
-};
-
 export const authService = {
   /**
-   * Initializes the users store and ensures the verified test account exists
+   * Initializes the users store
    */
   async init() {
     try {
-      const users = this.getRegisteredUsers();
-      const exists = users.some(u => u.email.toLowerCase() === VERIFIED_TEST_ACCOUNT.email.toLowerCase());
-      if (!exists) {
-        // Pre-compute real hash if not set
-        const realHash = await hashPassword(VERIFIED_TEST_ACCOUNT.rawPassword, VERIFIED_TEST_ACCOUNT.salt);
-        const testUserRecord = {
-          id: VERIFIED_TEST_ACCOUNT.id,
-          name: VERIFIED_TEST_ACCOUNT.name,
-          email: VERIFIED_TEST_ACCOUNT.email.toLowerCase(),
-          salt: VERIFIED_TEST_ACCOUNT.salt,
-          passwordHash: realHash,
-          institution: VERIFIED_TEST_ACCOUNT.institution,
-          department: VERIFIED_TEST_ACCOUNT.department,
-          role: VERIFIED_TEST_ACCOUNT.role,
-          createdAt: VERIFIED_TEST_ACCOUNT.createdAt
-        };
-        users.push(testUserRecord);
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+      const stored = localStorage.getItem(USERS_STORAGE_KEY);
+      if (!stored) {
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([]));
       }
     } catch (err) {
       console.warn('Failed to initialize user storage:', err);

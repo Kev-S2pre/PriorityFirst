@@ -87,26 +87,8 @@ export const storageService = {
 
       if (!stored) {
         if (!isInitialized) {
-          // If previous global tasks exist, migrate them to this user
-          const existingGlobal = localStorage.getItem(TASKS_KEY);
-          if (existingGlobal) {
-            try {
-              const globalParsed = JSON.parse(existingGlobal);
-              if (Array.isArray(globalParsed) && globalParsed.length > 0) {
-                localStorage.setItem(storageKey, existingGlobal);
-                localStorage.setItem(initKey, 'true');
-                return globalParsed.filter(isValidTask).map(sanitizeTask);
-              }
-            } catch {
-              // fallback to fresh sample tasks
-            }
-          }
-
-          // First visit / test user: Seed with realistic engineering student sample tasks
-          const initialTasks = generateSampleTasks();
-          localStorage.setItem(storageKey, JSON.stringify(initialTasks));
           localStorage.setItem(initKey, 'true');
-          return initialTasks;
+          return [];
         }
         return [];
       }

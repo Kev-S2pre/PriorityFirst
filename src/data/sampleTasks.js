@@ -27,7 +27,7 @@ export function generateSampleTasks() {
   const d2 = formatDate(2, 17, 0);  // Due in 2 days 5 PM
   const d3 = formatDate(3, 10, 30); // Due in 3 days 10:30 AM
   const d5 = formatDate(5, 23, 59); // Due in 5 days
-  const dNeg1 = formatDate(-1, 12, 0); // 1 day overdue (completed or pending demo)
+  const dNeg1 = formatDate(-1, 12, 0); // 1 day overdue
 
   return [
     {

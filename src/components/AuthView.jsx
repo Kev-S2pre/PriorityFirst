@@ -10,10 +10,9 @@ import {
   Lock, 
   User, 
   Building2, 
-  KeyRound,
   CheckCircle
 } from 'lucide-react';
-import { authService, VERIFIED_TEST_ACCOUNT } from '../services/authService.js';
+import { authService } from '../services/authService.js';
 
 export default function AuthView({ onAuthSuccess }) {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
@@ -40,14 +39,6 @@ export default function AuthView({ onAuthSuccess }) {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
-
-  // Helper to fill verified test account credentials into the form fields
-  const handleFillTestCredentials = () => {
-    setLoginEmail(VERIFIED_TEST_ACCOUNT.email);
-    setLoginPassword(VERIFIED_TEST_ACCOUNT.rawPassword);
-    setError('');
-    setSuccessMessage('Verified test account credentials loaded into fields. Click "Sign In" to authenticate.');
-  };
 
   // Handle Standard Login
   const handleLoginSubmit = async (e) => {
@@ -217,45 +208,6 @@ export default function AuthView({ onAuthSuccess }) {
           {/* LOGIN FORM */}
           {mode === 'login' && (
             <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-              {/* Verified Test Account Callout Box */}
-              <div 
-                style={{ 
-                  background: 'rgba(59, 130, 246, 0.08)', 
-                  border: '1px solid rgba(59, 130, 246, 0.25)', 
-                  borderRadius: '10px', 
-                  padding: '12px 14px',
-                  fontSize: '0.8rem'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span style={{ fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <KeyRound size={14} />
-                    Verified Test Account
-                  </span>
-                  <button 
-                    type="button"
-                    onClick={handleFillTestCredentials}
-                    style={{ 
-                      fontSize: '11px', 
-                      color: 'var(--primary)', 
-                      background: 'rgba(59, 130, 246, 0.15)', 
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
-                    id="btn-fill-test-account"
-                  >
-                    Auto-Fill Credentials
-                  </button>
-                </div>
-                <div style={{ color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '2px', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
-                  <div>Email: <strong style={{ color: 'var(--text-main)' }}>{VERIFIED_TEST_ACCOUNT.email}</strong></div>
-                  <div>Password: <strong style={{ color: 'var(--text-main)' }}>{VERIFIED_TEST_ACCOUNT.rawPassword}</strong></div>
-                </div>
-              </div>
-
               {/* Email Field */}
               <div className="form-group">
                 <label className="form-label" htmlFor="login-email">
