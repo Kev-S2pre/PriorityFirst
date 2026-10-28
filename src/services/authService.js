@@ -10,6 +10,7 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { isVerifiedInstitutionId, isOfficialSchool } from './institutionService';
 import { INSTITUTION_TYPES, isValidDepartment } from '../data/profileOptions';
+import { assertStrongPassword } from './passwordPolicy';
 
 const AUTH_SESSION_KEY = 'priorityfirst_session_v2';
 const USERS_STORAGE_KEY = 'priorityfirst_users_v2';
@@ -109,7 +110,7 @@ const cloudAuth = {
     return saveSession(profileToSessionUser(data.user, profile));
   },
 
-  async register({ name, email, password, institution, institutionId, institutionType, department, classification, otherDescription }) {
+  async register({ name, email, password, acceptedTermsAt, institution, institutionId, institutionType, department, classification, otherDescription }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -117,6 +118,7 @@ const cloudAuth = {
         emailRedirectTo: window.location.origin,
         data: {
           display_name: name,
+          accepted_terms_at: acceptedTermsAt,
           classification,
           other_description: otherDescription,
           institution,
@@ -358,7 +360,7 @@ export const authService = {
    * Register a new student account
    * MANDATORY: Does NOT automatically log the user in.
    */
-  async register({ name, email, password, confirmPassword, institution = '', institutionId = '', institutionType = '', department = '', classification = 'Student', otherDescription = '' }) {
+  async register({ name, email, password, confirmPassword, acceptedTerms = false, institution = '', institutionId = '', institutionType = '', department = '', classification = 'Student', otherDescription = '' }) {
     await this.init();
 
     const cleanName = (name || '').trim();
@@ -375,13 +377,16 @@ export const authService = {
       throw new Error('Please provide a valid email address.');
     }
 
-    if (!cleanPassword || cleanPassword.length < 6) {
-      throw new Error('Password must be at least 6 characters long.');
-    }
+    assertStrongPassword(password || '', { email: cleanEmail, name: cleanName });
 
     if (cleanPassword !== cleanConfirm) {
       throw new Error('Passwords do not match. Please re-type your password confirmation.');
     }
+
+    if (!acceptedTerms) {
+      throw new Error('You must agree to the Terms and Conditions to create an account.');
+    }
+    const acceptedTermsAt = new Date().toISOString();
 
     await checkInstitutionFields({ institution, institutionId, institutionType, department, classification });
 
@@ -390,6 +395,7 @@ export const authService = {
         name: cleanName,
         email: cleanEmail,
         password: cleanPassword,
+        acceptedTermsAt,
         institution: institution.trim(),
         institutionId,
         institutionType: institution.trim() ? institutionType : '',
@@ -418,6 +424,7 @@ export const authService = {
       institutionId: institution.trim() ? institutionId : '',
       institutionType: institution.trim() ? institutionType : '',
       department: department.trim(),
+      acceptedTermsAt,
       role: classification,
       classification: ['Student', 'Professional', 'Worker', 'Athlete', 'Other'].includes(classification) ? classification : 'Other',
       otherDescription: otherDescription.trim(),
@@ -535,11 +542,11 @@ export const authService = {
    * Changes the password after verifying the current one
    */
   async changePassword(userId, currentPassword, newPassword, confirmPassword) {
+    const sessionUser = this.getCurrentUser() || {};
+    assertStrongPassword(newPassword || '', { email: sessionUser.email || '', name: sessionUser.name || '' });
+
     if (isSupabaseConfigured) {
       const cleanNew = (newPassword || '').trim();
-      if (cleanNew.length < 6) {
-        throw new Error('New password must be at least 6 characters long.');
-      }
       if (cleanNew !== (confirmPassword || '').trim()) {
         throw new Error('New passwords do not match.');
       }
@@ -558,9 +565,6 @@ export const authService = {
     }
 
     const cleanNew = (newPassword || '').trim();
-    if (cleanNew.length < 6) {
-      throw new Error('New password must be at least 6 characters long.');
-    }
     if (cleanNew !== (confirmPassword || '').trim()) {
       throw new Error('New passwords do not match.');
     }
@@ -578,6 +582,58 @@ export const authService = {
     if (isSupabaseConfigured) {
       supabase.auth.signOut();
     }
+  },
+
+  /**
+   * Emails a password-reset link (cloud accounts). The reply is the same whether or not
+   * the email has an account, so the form can't be used to discover who is registered.
+   */
+  async requestPasswordReset(email) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      throw new Error('Please enter the email address you registered with.');
+    }
+    if (!isSupabaseConfigured) {
+      throw new Error('Password reset by email needs a cloud account. Accounts saved only on this device cannot be reset.');
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, { redirectTo: window.location.origin });
+    if (error && !/rate limit|security purposes/i.test(error.message)) {
+      throw new Error(friendlyAuthError(error));
+    }
+    if (error) {
+      throw new Error('Too many reset requests. Please wait a minute and try again.');
+    }
+  },
+
+  /**
+   * Sets a new password after the user opens the reset link from their email
+   */
+  async completePasswordReset(newPassword, confirmPassword) {
+    const { data } = await supabase.auth.getSession();
+    const user = data.session?.user;
+    if (!user) {
+      throw new Error('This reset link has expired. Please request a new one.');
+    }
+    assertStrongPassword(newPassword || '', { email: user.email, name: user.user_metadata?.display_name || '' });
+    if ((newPassword || '').trim() !== (confirmPassword || '').trim()) {
+      throw new Error('New passwords do not match.');
+    }
+    const { error } = await supabase.auth.updateUser({ password: (newPassword || '').trim() });
+    if (error) throw new Error(friendlyAuthError(error));
+    // Sign out of the temporary reset session so the user signs in with the new password
+    await supabase.auth.signOut();
+    localStorage.removeItem(AUTH_SESSION_KEY);
+  },
+
+  /**
+   * Calls onRecovery() when the app was opened from a password-reset email link
+   */
+  onPasswordRecovery(onRecovery) {
+    if (!isSupabaseConfigured) return () => {};
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') onRecovery();
+    });
+    return () => data.subscription.unsubscribe();
   },
 
   /**

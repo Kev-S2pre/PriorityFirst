@@ -1682,6 +1682,50 @@ html, body, #root { max-width: 100%; overflow-x: hidden; }
   border: 1px solid var(--danger-border);
 }
 
+/* Password strength meter */
+.password-strength {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+.password-meter { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.password-meter span { height: 5px; border-radius: var(--radius-full); background: var(--border-card); transition: background var(--trans-normal); }
+.password-strength-label { font-size: 0.75rem; }
+.password-rules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+  gap: 0.2rem 0.75rem;
+}
+.password-rules li { display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--text-muted); }
+.password-rules li svg { flex-shrink: 0; color: var(--danger); }
+.password-rules li.passed { color: var(--success); }
+.password-rules li.passed svg { color: var(--success); }
+.password-rules li.warning { color: var(--danger); }
+
+/* Terms agreement checkbox */
+.terms-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.825rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  cursor: pointer;
+}
+.terms-check input { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--primary); flex-shrink: 0; cursor: pointer; }
+.terms-link { background: none; border: none; padding: 0; font: inherit; color: var(--primary); text-decoration: underline; cursor: pointer; }
+.terms-body { display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.55; }
+.terms-body h4 { color: var(--text-main); font-size: 0.9rem; margin: 0; }
+.terms-body p, .terms-body ul { margin: 0; }
+.terms-body ul { padding-left: 1.1rem; }
+
 /* Verified institution picker */
 .institution-picker { position: relative; }
 .institution-input-wrap { position: relative; }

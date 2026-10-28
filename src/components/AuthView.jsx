@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   CheckCircle2, 
   LogIn, 
@@ -7,18 +7,29 @@ import {
   Eye, 
   EyeOff, 
   Mail, 
-  Lock, 
+  X,
   User, 
-  Building2, 
   CheckCircle
 } from 'lucide-react';
 import { authService } from '../services/authService.js';
 import { isCloudEnabled } from '../services/cloudSync.js';
 import InstitutionFields from './InstitutionFields.jsx';
+import PasswordStrength from './PasswordStrength.jsx';
+import { checkPassword } from '../services/passwordPolicy.js';
 import { defaultInstitutionType, isValidDepartment } from '../data/profileOptions.js';
 
-export default function AuthView({ onAuthSuccess }) {
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
+export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecoveryDone }) {
+  const [mode, setMode] = useState(recoveryMode ? 'reset' : 'login'); // 'login' | 'register' | 'forgot' | 'reset'
+  const [resetEmail, setResetEmail] = useState('');
+  const [isSendingReset, setIsSendingReset] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
+  const [isSavingNewPassword, setIsSavingNewPassword] = useState(false);
+
+  // Opened from a password-reset email link
+  useEffect(() => {
+    if (recoveryMode) setMode('reset');
+  }, [recoveryMode]);
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -31,6 +42,8 @@ export default function AuthView({ onAuthSuccess }) {
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [regAcceptedTerms, setRegAcceptedTerms] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   const [regDepartment, setRegDepartment] = useState('');
   const [regInstitution, setRegInstitution] = useState('');
   const [regInstitutionId, setRegInstitutionId] = useState('');
@@ -44,6 +57,48 @@ export default function AuthView({ onAuthSuccess }) {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
+
+  const goTo = (nextMode) => {
+    setMode(nextMode);
+    setError('');
+    setSuccessMessage('');
+    setFieldErrors({});
+  };
+
+  // Send a password-reset email
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    setIsSendingReset(true);
+    try {
+      await authService.requestPasswordReset(resetEmail);
+      setSuccessMessage(`If an account exists for ${resetEmail.trim()}, a reset link is on its way. Check your inbox (and spam folder).`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
+  // Save the new password chosen after opening the reset link
+  const handleResetSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setIsSavingNewPassword(true);
+    try {
+      await authService.completePasswordReset(newPassword, newPasswordConfirm);
+      setNewPassword('');
+      setNewPasswordConfirm('');
+      onRecoveryDone?.();
+      setMode('login');
+      setSuccessMessage('Password updated! Sign in with your new password.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSavingNewPassword(false);
+    }
+  };
 
   // Handle Standard Login
   const handleLoginSubmit = async (e) => {
@@ -92,12 +147,16 @@ export default function AuthView({ onAuthSuccess }) {
       errors.email = 'Please provide a valid email address.';
     }
 
-    if (!regPassword || regPassword.length < 6) {
-      errors.password = 'Password must be at least 6 characters.';
+    if (!checkPassword(regPassword, { email: regEmail, name: regName }).isValid) {
+      errors.password = 'Your password does not meet all the requirements below.';
     }
 
     if (regPassword !== regConfirmPassword) {
       errors.confirmPassword = 'Passwords do not match.';
+    }
+
+    if (!regAcceptedTerms) {
+      errors.terms = 'You must agree to the Terms and Conditions to create an account.';
     }
 
     if (Object.keys(errors).length > 0) {
@@ -113,6 +172,7 @@ export default function AuthView({ onAuthSuccess }) {
         email: regEmail,
         password: regPassword,
         confirmPassword: regConfirmPassword,
+        acceptedTerms: regAcceptedTerms,
         institution: regInstitution,
         institutionId: regInstitutionId,
         institutionType: regInstitutionType,
@@ -140,6 +200,7 @@ export default function AuthView({ onAuthSuccess }) {
       setRegInstitutionId('');
       setRegInstitutionType('school');
       setRegClassification('Student');
+      setRegAcceptedTerms(false);
       setRegOtherDescription('');
       setFieldErrors({});
     } catch (err) {
@@ -176,7 +237,8 @@ export default function AuthView({ onAuthSuccess }) {
           </p>
         </div>
 
-        {/* Tab Switcher: Sign In vs Register */}
+        {/* Tab Switcher: Sign In vs Register (hidden while setting a new password) */}
+        {mode !== 'reset' && (
         <div style={{ padding: '1.25rem 2rem 0' }}>
           <div style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
             <button 
@@ -197,6 +259,7 @@ export default function AuthView({ onAuthSuccess }) {
             </button>
           </div>
         </div>
+        )}
 
         {/* Success Alert Banner */}
         {successMessage && (
@@ -242,9 +305,20 @@ export default function AuthView({ onAuthSuccess }) {
 
               {/* Password Field with Show/Hide toggle */}
               <div className="form-group">
-                <label className="form-label" htmlFor="login-password">
-                  Password
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.5rem' }}>
+                  <label className="form-label" htmlFor="login-password">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    className="terms-link"
+                    style={{ fontSize: '0.8rem' }}
+                    id="btn-forgot-password"
+                    onClick={() => { setResetEmail(loginEmail); goTo('forgot'); }}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
                 <div style={{ position: 'relative' }}>
                   <input 
                     id="login-password"
@@ -287,6 +361,99 @@ export default function AuthView({ onAuthSuccess }) {
                   onClick={() => { setMode('register'); setError(''); setSuccessMessage(''); setFieldErrors({}); }}
                 >
                   Register here
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* FORGOT PASSWORD: request a reset link */}
+          {mode === 'forgot' && (
+            <form onSubmit={handleForgotSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '0.25rem' }}>Reset your password</h3>
+                <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  Enter the email you registered with and we'll send you a link to set a new password.
+                </p>
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="reset-email">Email Address</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    id="reset-email"
+                    type="email"
+                    className="form-input"
+                    placeholder="you@example.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    autoComplete="email"
+                    autoFocus
+                  />
+                  <Mail size={16} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="btn-primary"
+                style={{ width: '100%', justifyContent: 'center', padding: '0.75rem', fontSize: '15px' }}
+                disabled={isSendingReset}
+                id="btn-send-reset"
+              >
+                <Mail size={16} />
+                <span>{isSendingReset ? 'Sending…' : 'Send Reset Link'}</span>
+              </button>
+              <div style={{ textAlign: 'center', fontSize: '0.825rem' }}>
+                <button type="button" className="terms-link" onClick={() => goTo('login')}>Back to Sign In</button>
+              </div>
+            </form>
+          )}
+
+          {/* SET NEW PASSWORD: opened from the reset email link */}
+          {mode === 'reset' && (
+            <form onSubmit={handleResetSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '0.25rem' }}>Set a new password</h3>
+                <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  Choose a new password for your account.
+                </p>
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="new-password">New Password</label>
+                <input
+                  id="new-password"
+                  type="password"
+                  className="form-input"
+                  placeholder="Min. 8 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  autoComplete="new-password"
+                  autoFocus
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="new-password-confirm">Confirm New Password</label>
+                <input
+                  id="new-password-confirm"
+                  type="password"
+                  className="form-input"
+                  placeholder="Re-enter new password"
+                  value={newPasswordConfirm}
+                  onChange={(e) => setNewPasswordConfirm(e.target.value)}
+                  autoComplete="new-password"
+                />
+              </div>
+              <PasswordStrength password={newPassword} confirmPassword={newPasswordConfirm} />
+              <button
+                type="submit"
+                className="btn-primary"
+                style={{ width: '100%', justifyContent: 'center', padding: '0.75rem', fontSize: '15px' }}
+                disabled={isSavingNewPassword}
+                id="btn-save-new-password"
+              >
+                <span>{isSavingNewPassword ? 'Saving…' : 'Save New Password'}</span>
+              </button>
+              <div style={{ textAlign: 'center', fontSize: '0.825rem' }}>
+                <button type="button" className="terms-link" onClick={() => { onRecoveryDone?.(); goTo('login'); }}>
+                  Back to Sign In
                 </button>
               </div>
             </form>
@@ -398,7 +565,7 @@ export default function AuthView({ onAuthSuccess }) {
                       id="reg-password"
                       type={showRegPassword ? 'text' : 'password'}
                       className="form-input"
-                      placeholder="Min. 6 chars"
+                      placeholder="Min. 8 characters"
                       value={regPassword}
                       onChange={(e) => setRegPassword(e.target.value)}
                       autoComplete="new-password"
@@ -432,8 +599,37 @@ export default function AuthView({ onAuthSuccess }) {
                 </div>
               </div>
 
-              <button 
-                type="submit" 
+              <PasswordStrength
+                password={regPassword}
+                confirmPassword={regConfirmPassword}
+                email={regEmail}
+                name={regName}
+              />
+
+              <div className="form-group">
+                <label className="terms-check" htmlFor="reg-accept-terms">
+                  <input
+                    id="reg-accept-terms"
+                    type="checkbox"
+                    checked={regAcceptedTerms}
+                    onChange={(e) => {
+                      setRegAcceptedTerms(e.target.checked);
+                      if (e.target.checked) setFieldErrors(prev => ({ ...prev, terms: undefined }));
+                    }}
+                  />
+                  <span>
+                    I agree to the{' '}
+                    <button type="button" className="terms-link" onClick={(e) => { e.preventDefault(); setShowTerms(true); }}>
+                      Terms and Conditions
+                    </button>
+                    .
+                  </span>
+                </label>
+                {fieldErrors.terms && <span className="form-error">{fieldErrors.terms}</span>}
+              </div>
+
+              <button
+                type="submit"
                 className="btn-primary"
                 style={{ width: '100%', justifyContent: 'center', padding: '0.75rem', fontSize: '15px' }}
                 disabled={isRegistering}
@@ -464,6 +660,51 @@ export default function AuthView({ onAuthSuccess }) {
             : <><strong>Cryptographic Security:</strong> Passwords are authenticated via salted SHA-256 Web Crypto hashing. Plaintext passwords are never stored.</>}
         </div>
       </div>
+
+      {showTerms && (
+        <div className="modal-overlay" onClick={() => setShowTerms(false)} role="dialog" aria-modal="true" aria-labelledby="terms-title">
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title" id="terms-title">Terms and Conditions</h2>
+              <button className="action-icon-btn" onClick={() => setShowTerms(false)} aria-label="Close terms">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body terms-body">
+              <p>By creating a PriorityFirst² account, you agree to the following:</p>
+              <h4>1. Your account</h4>
+              <p>You are responsible for keeping your password private and for all activity under your account. Give accurate information when registering and keep it up to date.</p>
+              <h4>2. Acceptable use</h4>
+              <ul>
+                <li>Use PriorityFirst² only for planning and managing your own tasks and schedule.</li>
+                <li>Do not try to access other users' accounts or data, or disrupt the service.</li>
+                <li>Do not upload offensive, illegal, or misleading content, including profile pictures.</li>
+              </ul>
+              <h4>3. Your data</h4>
+              <p>Your profile, tasks, and settings are stored to provide the service{isCloudEnabled ? ' and are saved to your cloud account so you can use them on any device' : ' on this device'}. Only you can see your tasks. You can export or delete your tasks at any time in Settings.</p>
+              <h4>4. Recommendations</h4>
+              <p>Task priorities and schedules are suggestions to help you plan. You remain responsible for meeting your own deadlines and commitments.</p>
+              <h4>5. Changes and termination</h4>
+              <p>These terms may be updated as the service improves. Accounts that break these terms may be suspended.</p>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-secondary" onClick={() => setShowTerms(false)}>Close</button>
+              <button
+                type="button"
+                className="btn-primary"
+                id="btn-accept-terms"
+                onClick={() => {
+                  setRegAcceptedTerms(true);
+                  setFieldErrors(prev => ({ ...prev, terms: undefined }));
+                  setShowTerms(false);
+                }}
+              >
+                I Agree
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

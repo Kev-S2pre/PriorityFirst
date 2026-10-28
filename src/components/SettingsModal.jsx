@@ -24,6 +24,7 @@ import { browserNotificationService, playNotificationSound } from '../services/n
 import { authService } from '../services/authService';
 import { isCloudEnabled } from '../services/cloudSync';
 import InstitutionFields from './InstitutionFields';
+import PasswordStrength from './PasswordStrength';
 import { defaultInstitutionType, isValidDepartment } from '../data/profileOptions';
 
 const SECTIONS = [
@@ -417,6 +418,13 @@ export default function SettingsModal({
                       value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })} />
                   </div>
                 </div>
+
+                <PasswordStrength
+                  password={passwords.next}
+                  confirmPassword={passwords.confirm}
+                  email={currentUser?.email}
+                  name={currentUser?.name}
+                />
 
                 {statusMessage(passwordStatus)}
 

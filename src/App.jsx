@@ -13,6 +13,7 @@ import ConfirmModal from './components/ConfirmModal';
 import { storageService, DEFAULT_WEIGHTS } from './services/storageService';
 import { authService } from './services/authService';
 import { cloudSync, isCloudEnabled } from './services/cloudSync';
+import { openedFromRecoveryLink } from './services/supabaseClient';
 import { prioritizeTasks } from './services/prioritizationEngine';
 import { 
   generateNotifications, 
@@ -22,7 +23,8 @@ import {
 
 export default function App() {
   // Simulated Authentication Session State
-  const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUser());
+  // A reset-password link always starts at the "Set a new password" screen, not signed in
+  const [currentUser, setCurrentUser] = useState(() => (openedFromRecoveryLink ? null : authService.getCurrentUser()));
 
   // Load tasks and settings from localStorage
   const [tasks, setTasks] = useState(() => storageService.getTasks(currentUser?.id));
@@ -130,6 +132,13 @@ export default function App() {
       setSyncStatus('offline');
     }
   }, [showToast]);
+
+  // Opened from a password-reset email link: show the "Set a new password" screen
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(openedFromRecoveryLink);
+  useEffect(() => authService.onPasswordRecovery(() => {
+    setIsPasswordRecovery(true);
+    setCurrentUser(null);
+  }), []);
 
   // Re-check the saved session and load this user's cloud data on app start
   useEffect(() => {
@@ -401,7 +410,11 @@ export default function App() {
       <main className="main-content">
         {!currentUser ? (
           /* Unauthenticated Gate: Login & Registration */
-          <AuthView onAuthSuccess={handleAuthSuccess} />
+          <AuthView
+            onAuthSuccess={handleAuthSuccess}
+            recoveryMode={isPasswordRecovery}
+            onRecoveryDone={() => setIsPasswordRecovery(false)}
+          />
         ) : (
           /* Protected Academic Features */
           <>
