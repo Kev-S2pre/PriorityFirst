@@ -1250,11 +1250,20 @@ a {
   box-shadow: var(--shadow-modal);
   width: 100%;
   max-width: 620px;
-  max-height: 90vh;
+  max-height: 92vh;
+  height: auto;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Forms wrapping body + footer must join the flex layout so the body scrolls */
+.modal-dialog > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .modal-header {
@@ -1263,6 +1272,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .modal-title {
@@ -1274,9 +1284,28 @@ a {
 .modal-body {
   padding: 1.5rem;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  /* Always show scrollbar so user knows they can scroll */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-hover) transparent;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background-color: var(--border-hover);
+  border-radius: var(--radius-full);
 }
 
 .modal-footer {
@@ -1287,6 +1316,7 @@ a {
   justify-content: flex-end;
   gap: 0.75rem;
   background: rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
 }
 
 /* Form Controls */

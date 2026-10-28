@@ -318,6 +318,7 @@ export default function App() {
         isOpen={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
         onSave={handleSaveTask}
+        onDelete={handleDeleteTask}
         taskToEdit={taskToEdit}
       />
 

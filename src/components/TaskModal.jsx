@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, AlertCircle, Clock, Calendar } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle, Clock, Calendar, Trash2 } from 'lucide-react';
 import { TASK_CATEGORIES, durationFromTimes, formatDuration, formatTime } from '../data/taskOptions.js';
 import ConfirmModal from './ConfirmModal.jsx';
 
@@ -7,6 +7,7 @@ export default function TaskModal({
   isOpen,
   onClose,
   onSave,
+  onDelete,
   taskToEdit = null,
   initialDate = null
 }) {
@@ -25,6 +26,7 @@ export default function TaskModal({
   const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState({});
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Initial state tracking to detect unsaved changes
   const [initialFormState, setInitialFormState] = useState(null);
@@ -183,7 +185,7 @@ export default function TaskModal({
             </button>
           </div>
 
-          <form onSubmit={handleSubmit}>
+          <form id="task-form" onSubmit={handleSubmit}>
           <div className="modal-body">
             {/* Title */}
             <div className="form-group">
@@ -398,6 +400,20 @@ export default function TaskModal({
           </div>
 
           <div className="modal-footer">
+            {/* Delete button - only show when editing an existing task */}
+            {taskToEdit && onDelete && (
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ color: 'var(--danger)', borderColor: 'var(--danger-border)', marginRight: 'auto' }}
+                onClick={() => setShowDeleteConfirm(true)}
+                id="btn-delete-task"
+                aria-label="Delete this task"
+              >
+                <Trash2 size={15} />
+                <span>Delete</span>
+              </button>
+            )}
             <button 
               type="button" 
               className="btn-secondary" 
@@ -430,6 +446,23 @@ export default function TaskModal({
         onClose();
       }}
       onCancel={() => setShowDiscardConfirm(false)}
+    />
+
+    <ConfirmModal 
+      isOpen={showDeleteConfirm}
+      title="Delete Task?"
+      message={`Are you sure you want to permanently delete "${taskToEdit?.title}"? This action cannot be undone.`}
+      confirmText="Delete Task"
+      cancelText="Cancel"
+      confirmVariant="danger"
+      onConfirm={() => {
+        setShowDeleteConfirm(false);
+        if (onDelete && taskToEdit) {
+          onDelete(taskToEdit.id, taskToEdit.title);
+        }
+        onClose();
+      }}
+      onCancel={() => setShowDeleteConfirm(false)}
     />
   </>
   );
