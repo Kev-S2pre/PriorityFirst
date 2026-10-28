@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, AlertCircle, Clock, Calendar, Trash2 } from 'lucide-react';
 import { TASK_CATEGORIES, durationFromTimes, formatDuration, formatTime } from '../data/taskOptions.js';
 import ConfirmModal from './ConfirmModal.jsx';
+import { validateTaskTitle, validateLongText, LIMITS } from '../services/validation.js';
 
 export default function TaskModal({
   isOpen,
@@ -131,9 +132,12 @@ export default function TaskModal({
 
   const validate = () => {
     const newErrors = {};
-    if (!title.trim()) {
-      newErrors.title = 'Title is required.';
-    }
+    const titleError = validateTaskTitle(title);
+    if (titleError) newErrors.title = titleError;
+    const descriptionError = validateLongText(description, 'Description', LIMITS.description, { multiline: false });
+    if (descriptionError) newErrors.description = descriptionError;
+    const notesError = validateLongText(notes, 'Notes', LIMITS.notes);
+    if (notesError) newErrors.notes = notesError;
     if (!deadlineDate) {
       newErrors.deadlineDate = 'Deadline date is required.';
     } else {
@@ -212,6 +216,7 @@ export default function TaskModal({
                 className="form-input"
                 placeholder="e.g. Fluid Mechanics Venturi Lab Report"
                 value={title}
+                maxLength={120}
                 onChange={(e) => setTitle(e.target.value)}
                 autoFocus
               />
@@ -229,8 +234,10 @@ export default function TaskModal({
                 className="form-input"
                 placeholder="Brief summary of required deliverables or problem statements..."
                 value={description}
+                maxLength={500}
                 onChange={(e) => setDescription(e.target.value)}
               />
+              {errors.description && <span className="form-error">{errors.description}</span>}
             </div>
 
             {/* Category & Status */}
@@ -411,8 +418,10 @@ export default function TaskModal({
                 rows={3}
                 placeholder="Include reference equations, textbook chapters, rubric guidelines, or lab partners..."
                 value={notes}
+                maxLength={2000}
                 onChange={(e) => setNotes(e.target.value)}
               />
+              {errors.notes && <span className="form-error">{errors.notes}</span>}
             </div>
           </div>
 

@@ -16,6 +16,7 @@ import { isCloudEnabled } from '../services/cloudSync.js';
 import InstitutionFields from './InstitutionFields.jsx';
 import PasswordStrength from './PasswordStrength.jsx';
 import { checkPassword } from '../services/passwordPolicy.js';
+import { validateName, validateEmail } from '../services/validation.js';
 import { defaultInstitutionType, isValidDepartment } from '../data/profileOptions.js';
 
 export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecoveryDone }) {
@@ -107,9 +108,8 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
     setSuccessMessage('');
     const errors = {};
 
-    if (!loginEmail.trim()) {
-      errors.email = 'Email address is required.';
-    }
+    const loginEmailError = validateEmail(loginEmail);
+    if (loginEmailError) errors.email = loginEmailError;
     if (!loginPassword) {
       errors.password = 'Password is required.';
     }
@@ -138,14 +138,11 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
     setSuccessMessage('');
     const errors = {};
 
-    if (!regName.trim() || regName.trim().length < 2) {
-      errors.name = 'Full name must be at least 2 characters.';
-    }
+    const nameError = validateName(regName);
+    if (nameError) errors.name = nameError;
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!regEmail.trim() || !emailRegex.test(regEmail.trim())) {
-      errors.email = 'Please provide a valid email address.';
-    }
+    const emailError = validateEmail(regEmail);
+    if (emailError) errors.email = emailError;
 
     if (!checkPassword(regPassword, { email: regEmail, name: regName }).isValid) {
       errors.password = 'Your password does not meet all the requirements below.';
@@ -293,6 +290,7 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
                     className="form-input"
                     placeholder="student@priorityfirst.edu"
                     value={loginEmail}
+                    maxLength={254}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     autoComplete="email"
                     autoFocus
@@ -383,6 +381,7 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
                     className="form-input"
                     placeholder="you@example.com"
                     value={resetEmail}
+                    maxLength={254}
                     onChange={(e) => setResetEmail(e.target.value)}
                     autoComplete="email"
                     autoFocus
@@ -472,6 +471,7 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
                     className="form-input"
                     placeholder="e.g. Maria Santos"
                     value={regName}
+                    maxLength={60}
                     onChange={(e) => setRegName(e.target.value)}
                     autoFocus
                   />
@@ -491,6 +491,7 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
                     className="form-input"
                     placeholder="maria@example.com"
                     value={regEmail}
+                    maxLength={254}
                     onChange={(e) => setRegEmail(e.target.value)}
                     autoComplete="email"
                   />
@@ -549,6 +550,7 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
                     className="form-input"
                     placeholder="How would you describe your role?"
                     value={regOtherDescription}
+                    maxLength={80}
                     onChange={(e) => setRegOtherDescription(e.target.value)}
                   />
                 </div>

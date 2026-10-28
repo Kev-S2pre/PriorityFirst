@@ -2,6 +2,7 @@
  * PriorityFirst² — Password policy for new accounts and password changes.
  * Existing passwords keep working at sign-in; the rules apply whenever a password is set.
  */
+import { PASSWORD_REGEX } from './validation';
 
 export const PASSWORD_RULES = [
   { id: 'length', label: 'At least 8 characters', test: (pw) => pw.length >= 8 },
@@ -42,7 +43,7 @@ export function checkPassword(password = '', { email = '', name = '' } = {}) {
     hasPersonalInfo,
     score,
     label: ['Very weak', 'Weak', 'Fair', 'Good', 'Strong'][score],
-    isValid: allRulesPass && !isCommon && !hasPersonalInfo
+    isValid: allRulesPass && PASSWORD_REGEX.test(password) && !isCommon && !hasPersonalInfo
   };
 }
 

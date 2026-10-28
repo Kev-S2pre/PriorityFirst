@@ -11,6 +11,12 @@ import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { isVerifiedInstitutionId, isOfficialSchool } from './institutionService';
 import { INSTITUTION_TYPES, isValidDepartment } from '../data/profileOptions';
 import { assertStrongPassword } from './passwordPolicy';
+import { validateName, validateEmail, validateLongText, cleanName as tidyName, LIMITS } from './validation';
+
+// Throws the validator's message, if any
+function assertValid(message) {
+  if (message) throw new Error(message);
+}
 
 const AUTH_SESSION_KEY = 'priorityfirst_session_v2';
 const USERS_STORAGE_KEY = 'priorityfirst_users_v2';
@@ -311,9 +317,7 @@ export const authService = {
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanPassword = (password || '').trim();
 
-    if (!cleanEmail) {
-      throw new Error('Please enter your email address.');
-    }
+    assertValid(validateEmail(cleanEmail));
     if (!cleanPassword) {
       throw new Error('Please enter your password.');
     }
@@ -363,19 +367,14 @@ export const authService = {
   async register({ name, email, password, confirmPassword, acceptedTerms = false, institution = '', institutionId = '', institutionType = '', department = '', classification = 'Student', otherDescription = '' }) {
     await this.init();
 
-    const cleanName = (name || '').trim();
+    const cleanName = tidyName(name);
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanPassword = (password || '').trim();
     const cleanConfirm = (confirmPassword || '').trim();
 
-    if (!cleanName || cleanName.length < 2) {
-      throw new Error('Full Name must be at least 2 characters long.');
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(cleanEmail)) {
-      throw new Error('Please provide a valid email address.');
-    }
+    assertValid(validateName(cleanName));
+    assertValid(validateEmail(cleanEmail));
+    assertValid(otherDescription ? validateLongText(otherDescription, 'Role description', LIMITS.otherDescription, { multiline: false }) : '');
 
     assertStrongPassword(password || '', { email: cleanEmail, name: cleanName });
 
@@ -446,15 +445,12 @@ export const authService = {
    * Updates the signed-in user's profile details and refreshes the session
    */
   async updateProfile(userId, { name, email, institution = '', institutionId = '', institutionType = '', department = '', classification = 'Student', otherDescription = '' }) {
-    const cleanName = (name || '').trim();
+    const cleanName = tidyName(name);
     const cleanEmail = (email || '').trim().toLowerCase();
 
-    if (!cleanName || cleanName.length < 2) {
-      throw new Error('Full Name must be at least 2 characters long.');
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      throw new Error('Please provide a valid email address.');
-    }
+    assertValid(validateName(cleanName));
+    assertValid(validateEmail(cleanEmail));
+    assertValid(otherDescription ? validateLongText(otherDescription, 'Role description', LIMITS.otherDescription, { multiline: false }) : '');
     await checkInstitutionFields({ institution, institutionId, institutionType, department, classification });
 
     if (isSupabaseConfigured) {
@@ -590,8 +586,8 @@ export const authService = {
    */
   async requestPasswordReset(email) {
     const cleanEmail = (email || '').trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      throw new Error('Please enter the email address you registered with.');
+    if (validateEmail(cleanEmail)) {
+      throw new Error('Please enter the email address you registered with, like name@example.com.');
     }
     if (!isSupabaseConfigured) {
       throw new Error('Password reset by email needs a cloud account. Accounts saved only on this device cannot be reset.');
