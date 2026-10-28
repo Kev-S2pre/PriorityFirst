@@ -35,12 +35,15 @@ export default function App() {
     if (filter) {
       setTaskManagerFilter(filter);
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Modals state
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
+  const [newTaskDate, setNewTaskDate] = useState(null);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState('profile');
 
   // Reusable confirmation modal state
   const [confirmDialog, setConfirmDialog] = useState({
@@ -112,8 +115,10 @@ export default function App() {
   };
 
   // Task Actions
-  const handleOpenAddTask = () => {
+  const handleOpenAddTask = (date = null) => {
     setTaskToEdit(null);
+    // Only accept a date string (buttons may pass a click event)
+    setNewTaskDate(typeof date === 'string' ? date : null);
     setIsTaskModalOpen(true);
   };
 
@@ -242,9 +247,11 @@ export default function App() {
       {/* Top Navbar */}
       <Navbar 
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onOpenAddTask={handleOpenAddTask}
-        onOpenSettings={() => setIsSettingsModalOpen(true)}
+        setActiveTab={(tab) => handleNavigateWithFilter(tab, 'all')}
+        onOpenSettings={(section = 'profile') => {
+          setSettingsSection(section);
+          setIsSettingsModalOpen(true);
+        }}
         notifications={notifications}
         theme={settings.theme}
         onToggleTheme={handleToggleTheme}
@@ -320,12 +327,19 @@ export default function App() {
         onSave={handleSaveTask}
         onDelete={handleDeleteTask}
         taskToEdit={taskToEdit}
+        initialDate={newTaskDate}
       />
 
       {/* Settings, Backups & LocalStorage Modal */}
       <SettingsModal 
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
+        initialSection={settingsSection}
+        currentUser={currentUser}
+        onProfileUpdated={(user) => {
+          setCurrentUser(user);
+          showToast('Profile updated', 'success');
+        }}
         onExportBackup={handleExportBackup}
         onImportBackup={handleImportBackup}
         onResetSampleData={handleResetSampleData}

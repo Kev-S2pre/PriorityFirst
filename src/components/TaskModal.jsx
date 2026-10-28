@@ -126,6 +126,9 @@ export default function TaskModal({
 
   if (!isOpen) return null;
 
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
   const validate = () => {
     const newErrors = {};
     if (!title.trim()) {
@@ -133,6 +136,17 @@ export default function TaskModal({
     }
     if (!deadlineDate) {
       newErrors.deadlineDate = 'Deadline date is required.';
+    } else {
+      // Only block past deadlines on new tasks, or when an existing deadline is changed
+      const deadlineChanged = !taskToEdit
+        || deadlineDate !== initialFormState?.deadlineDate
+        || deadlineTime !== initialFormState?.deadlineTime;
+      if (deadlineChanged && new Date(`${deadlineDate}T${deadlineTime || '23:59'}`) < new Date()) {
+        newErrors.deadlineDate = 'Deadline cannot be in the past. Pick today or a future date.';
+      }
+    }
+    if (reminderAt && reminderAt !== initialFormState?.reminderAt && new Date(reminderAt) < new Date()) {
+      newErrors.reminderAt = 'Reminder time cannot be in the past.';
     }
     const scheduledDuration = durationFromTimes(startTime, endTime);
     if ((startTime || endTime) && scheduledDuration === null) {
@@ -264,6 +278,7 @@ export default function TaskModal({
                   id="task-date-input"
                   type="date"
                   className="form-input"
+                  min={taskToEdit && deadlineDate && deadlineDate < todayStr ? undefined : todayStr}
                   value={deadlineDate}
                   onChange={(e) => setDeadlineDate(e.target.value)}
                 />
@@ -322,9 +337,11 @@ export default function TaskModal({
                 id="task-reminder-input"
                 type="datetime-local"
                 className="form-input"
+                min={`${todayStr}T00:00`}
                 value={reminderAt}
                 onChange={(e) => setReminderAt(e.target.value)}
               />
+              {errors.reminderAt && <span className="form-error">{errors.reminderAt}</span>}
               <span className="form-hint">If blank, PriorityFirst reminds you at the deadline. Desktop permissions are required.</span>
             </div>
 
@@ -356,7 +373,7 @@ export default function TaskModal({
                   id="task-hours-input"
                   type="number"
                   min="0.1"
-                  step="0.5"
+                  step="0.1"
                   className="form-input"
                   value={estimatedHours}
                   onChange={(e) => setEstimatedHours(e.target.value)}

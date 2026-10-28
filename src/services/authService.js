@@ -201,6 +201,85 @@ export const authService = {
   },
 
   /**
+   * Updates the signed-in user's profile details and refreshes the session
+   */
+  async updateProfile(userId, { name, email, institution = '', department = '', classification = 'Student', otherDescription = '' }) {
+    const cleanName = (name || '').trim();
+    const cleanEmail = (email || '').trim().toLowerCase();
+
+    if (!cleanName || cleanName.length < 2) {
+      throw new Error('Full Name must be at least 2 characters long.');
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      throw new Error('Please provide a valid email address.');
+    }
+
+    const users = this.getRegisteredUsers();
+    const index = users.findIndex(u => u.id === userId);
+    if (index === -1) {
+      throw new Error('Account not found. Please sign in again.');
+    }
+    if (users.some(u => u.id !== userId && u.email.toLowerCase() === cleanEmail)) {
+      throw new Error('Another account already uses this email address.');
+    }
+
+    const cleanClassification = ['Student', 'Professional', 'Worker', 'Athlete', 'Other'].includes(classification) ? classification : 'Other';
+    users[index] = {
+      ...users[index],
+      name: cleanName,
+      email: cleanEmail,
+      institution: institution.trim(),
+      department: department.trim(),
+      role: cleanClassification,
+      classification: cleanClassification,
+      otherDescription: cleanClassification === 'Other' ? otherDescription.trim() : '',
+      updatedAt: new Date().toISOString()
+    };
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+
+    const sessionUser = {
+      ...this.getCurrentUser(),
+      name: users[index].name,
+      email: users[index].email,
+      institution: users[index].institution,
+      department: users[index].department,
+      role: users[index].classification,
+      classification: users[index].classification,
+      otherDescription: users[index].otherDescription
+    };
+    localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(sessionUser));
+    return sessionUser;
+  },
+
+  /**
+   * Changes the password after verifying the current one
+   */
+  async changePassword(userId, currentPassword, newPassword, confirmPassword) {
+    const users = this.getRegisteredUsers();
+    const index = users.findIndex(u => u.id === userId);
+    if (index === -1) {
+      throw new Error('Account not found. Please sign in again.');
+    }
+
+    const currentHash = await hashPassword((currentPassword || '').trim(), users[index].salt);
+    if (currentHash !== users[index].passwordHash) {
+      throw new Error('Current password is incorrect.');
+    }
+
+    const cleanNew = (newPassword || '').trim();
+    if (cleanNew.length < 6) {
+      throw new Error('New password must be at least 6 characters long.');
+    }
+    if (cleanNew !== (confirmPassword || '').trim()) {
+      throw new Error('New passwords do not match.');
+    }
+
+    const salt = generateSalt();
+    users[index] = { ...users[index], salt, passwordHash: await hashPassword(cleanNew, salt) };
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  },
+
+  /**
    * Logs out the active user and invalidates session
    */
   logout() {

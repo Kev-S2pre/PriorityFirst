@@ -6,7 +6,6 @@ import {
   Sliders, 
   Calendar, 
   BarChart3, 
-  Plus, 
   Bell, 
   Moon, 
   Sun, 
@@ -22,7 +21,6 @@ import ConfirmModal from './ConfirmModal.jsx';
 export default function Navbar({
   activeTab,
   setActiveTab,
-  onOpenAddTask,
   onOpenSettings,
   notifications,
   theme,
@@ -122,19 +120,6 @@ export default function Navbar({
 
         {/* Action Buttons */}
         <div className="navbar-actions">
-          {/* Quick Add Task (Protected) */}
-          {currentUser && (
-            <button 
-              className="btn-primary"
-              onClick={onOpenAddTask}
-              id="btn-quick-add-task"
-              title="Create a new task"
-            >
-              <Plus size={18} strokeWidth={2.5} />
-              <span>New Task</span>
-            </button>
-          )}
-
           {/* Notifications Bell (Protected) */}
           {currentUser && (
             <div style={{ position: 'relative' }} ref={popoverRef}>
@@ -222,7 +207,7 @@ export default function Navbar({
           {/* Settings & Storage */}
           <button 
             className="icon-btn"
-            onClick={onOpenSettings}
+            onClick={() => onOpenSettings('profile')}
             title="Settings, Backups & Local Storage"
             id="btn-settings-toggle"
             aria-label="Open settings"
@@ -233,19 +218,24 @@ export default function Navbar({
           {/* User Profile & Logout */}
           {currentUser && (
             <div className="navbar-profile" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginLeft: '0.25rem', paddingLeft: '0.5rem', borderLeft: '1px solid var(--border-subtle)' }}>
-              <div 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.45rem', 
-                  padding: '4px 10px', 
+              <button
+                type="button"
+                className="navbar-profile-btn"
+                onClick={() => onOpenSettings('profile')}
+                aria-label="Edit your profile"
+                id="btn-open-profile"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '4px 10px',
                   background: 'var(--bg-surface)', 
                   border: '1px solid var(--border-subtle)', 
                   borderRadius: 'var(--radius-full)',
                   fontSize: '0.8rem',
                   fontWeight: 600
                 }}
-                title={`${currentUser.name} · ${currentUser.classification || currentUser.role || 'User'} (${currentUser.email})`}
+                title={`Edit profile · ${currentUser.name} (${currentUser.email})`}
               >
                 <div 
                   style={{ 
@@ -266,7 +256,7 @@ export default function Navbar({
                 <span style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {currentUser.name.split(' ')[0]}
                 </span>
-              </div>
+              </button>
 
               <button 
                 className="icon-btn"

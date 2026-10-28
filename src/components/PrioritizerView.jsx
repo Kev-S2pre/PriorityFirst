@@ -111,7 +111,7 @@ export default function PrioritizerView({
         </div>
 
         {/* Interactive Sliders */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: '1.25rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
           {/* Urgency */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', marginBottom: '0.35rem' }}>
@@ -243,7 +243,7 @@ export default function PrioritizerView({
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
                   {/* Left: Rank, Title, Category */}
-                  <div style={{ flex: 1, minWidth: '260px' }}>
+                  <div style={{ flex: 1, minWidth: 'min(260px, 100%)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
                       <span 
                         className="rank-badge"
@@ -283,7 +283,7 @@ export default function PrioritizerView({
                   </div>
 
                   {/* Right: Scores Meter & Action Buttons */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.75rem', minWidth: '200px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.75rem', minWidth: 'min(200px, 100%)' }}>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button 
                         className="btn-secondary"

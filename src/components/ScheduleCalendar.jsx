@@ -69,8 +69,13 @@ export default function ScheduleCalendar({
   // Start Day of the week: 1 = Monday (as in screenshot), 0 = Sunday, 6 = Saturday
   const [startDayOfWeek, setStartDayOfWeek] = useState(1);
 
+  // Past dates can't be scheduled, so the calendar starts at the current month
+  const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
+  const isAtCurrentMonth = currentYear === today.getFullYear() && currentMonth === today.getMonth();
+
   // Month navigation
   const handlePrevMonth = () => {
+    if (isAtCurrentMonth) return;
     if (currentMonth === 0) {
       setCurrentMonth(11);
       setCurrentYear(prev => prev - 1);
@@ -117,7 +122,8 @@ export default function ScheduleCalendar({
       dayOfYear,
       weekNumber,
       isToday,
-      dateStr: toDateStr(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate())
+      isPast: toDateStr(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()) < toDateStr(today.getFullYear(), today.getMonth(), today.getDate()),
+      dateStr:toDateStr(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate())
     };
   }, [selectedDate, today]);
 
@@ -235,12 +241,12 @@ export default function ScheduleCalendar({
   // Tasks for currently selected day
   const selectedDayTasks = tasksByDate.get(selectedDayInfo.dateStr) || [];
 
-  // Years range for dropdown selector (2020 to 2035)
+  // Years range for dropdown selector (this year through 10 years ahead)
   const yearsList = useMemo(() => {
     const list = [];
-    for (let y = 2020; y <= 2035; y++) list.push(y);
+    for (let y = today.getFullYear(); y <= today.getFullYear() + 10; y++) list.push(y);
     return list;
-  }, []);
+  }, [today]);
 
   return (
     <div className="schedule-calendar-container" style={{ maxWidth: '960px', margin: '0 auto' }}>
@@ -310,7 +316,13 @@ export default function ScheduleCalendar({
               <select
                 aria-label="Select Year"
                 value={currentYear}
-                onChange={(e) => setCurrentYear(Number(e.target.value))}
+                onChange={(e) => {
+                  const year = Number(e.target.value);
+                  setCurrentYear(year);
+                  if (year === today.getFullYear() && currentMonth < today.getMonth()) {
+                    setCurrentMonth(today.getMonth());
+                  }
+                }}
                 style={{
                   appearance: 'none',
                   WebkitAppearance: 'none',
@@ -335,6 +347,7 @@ export default function ScheduleCalendar({
             {/* Prev Month Button */}
             <button
               onClick={handlePrevMonth}
+              disabled={isAtCurrentMonth}
               aria-label="Previous Month"
               style={{
                 width: '32px',
@@ -374,7 +387,7 @@ export default function ScheduleCalendar({
                 }}
               >
                 {MONTH_ABBR.map((abbr, idx) => (
-                  <option key={abbr} value={idx}>{abbr}</option>
+                  <option key={abbr} value={idx} disabled={currentYear === today.getFullYear() && idx < today.getMonth()}>{abbr}</option>
                 ))}
               </select>
               <ChevronDown size={14} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#6b7280' }} />
@@ -478,7 +491,7 @@ export default function ScheduleCalendar({
         </div>
 
         {/* 7-COLUMN CALENDAR GRID */}
-        <div 
+        <div className="calendar-grid" 
           style={{ 
             display: 'grid', 
             gridTemplateColumns: 'repeat(7, 1fr)', 
@@ -492,11 +505,14 @@ export default function ScheduleCalendar({
             const hasTasks = cellTasks.length > 0;
             const hasCritical = cellTasks.some(t => t.importance === 'Critical' || t.status === 'overdue');
             const hasHigh = cellTasks.some(t => t.importance === 'High');
+            const isPast = cell.dateStr < todayStr;
 
             return (
-              <div 
+              <div
                 key={`${cell.dateStr}-${idx}`}
+                aria-disabled={isPast}
                 onClick={() => {
+                  if (isPast) return;
                   setSelectedDate(new Date(cell.year, cell.month, cell.dayNumber));
                   if (!cell.isCurrentMonth) {
                     setCurrentYear(cell.year);
@@ -509,7 +525,8 @@ export default function ScheduleCalendar({
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer',
+                  cursor: isPast ? 'not-allowed' : 'pointer',
+                  opacity: isPast ? 0.35 : 1,
                   position: 'relative',
                   borderRadius: '8px',
                   transition: 'background-color 0.15s ease, border-color 0.15s ease',
@@ -517,7 +534,7 @@ export default function ScheduleCalendar({
                   border: cell.isToday ? '2px solid #2563eb' : (cell.isSelected ? '2px solid #93c5fd' : '2px solid transparent'),
                   backgroundColor: cell.isSelected ? 'rgba(37, 99, 235, 0.05)' : 'transparent'
                 }}
-                title={`${cell.dateStr}${hasTasks ? ` (${cellTasks.length} task${cellTasks.length > 1 ? 's' : ''})` : ''}`}
+                title={isPast ? `${cell.dateStr} (past date)` : `${cell.dateStr}${hasTasks ? ` (${cellTasks.length} task${cellTasks.length > 1 ? 's' : ''})` : ''}`}
               >
                 {/* Upper-left 'T' indicator for Today matching screenshot */}
                 {cell.isToday && (
@@ -613,15 +630,17 @@ export default function ScheduleCalendar({
             </div>
           </div>
 
-          <button
-            className="btn-primary"
-            style={{ fontSize: '13px', padding: '6px 14px' }}
-            onClick={() => onOpenAddTask(selectedDayInfo.dateStr)}
-            id="btn-calendar-add-task-date"
-          >
-            <Plus size={15} strokeWidth={2.5} />
-            <span>Add Task for this Date</span>
-          </button>
+          {!selectedDayInfo.isPast && (
+            <button
+              className="btn-primary"
+              style={{ fontSize: '13px', padding: '6px 14px' }}
+              onClick={() => onOpenAddTask(selectedDayInfo.dateStr)}
+              id="btn-calendar-add-task-date"
+            >
+              <Plus size={15} strokeWidth={2.5} />
+              <span>Add Task for this Date</span>
+            </button>
+          )}
         </div>
 
         <div style={{ padding: '20px' }}>
@@ -634,14 +653,16 @@ export default function ScheduleCalendar({
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '380px', margin: '0 auto 16px' }}>
                 You have no scheduled coursework or laboratory deadlines on this day.
               </p>
-              <button 
-                className="btn-secondary" 
-                style={{ fontSize: '13px', margin: '0 auto' }}
-                onClick={() => onOpenAddTask(selectedDayInfo.dateStr)}
-              >
-                <Plus size={14} />
-                <span>Schedule a Task</span>
-              </button>
+              {!selectedDayInfo.isPast && (
+                <button
+                  className="btn-secondary"
+                  style={{ fontSize: '13px', margin: '0 auto' }}
+                  onClick={() => onOpenAddTask(selectedDayInfo.dateStr)}
+                >
+                  <Plus size={14} />
+                  <span>Schedule a Task</span>
+                </button>
+              )}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -669,7 +690,7 @@ export default function ScheduleCalendar({
                     }}
                   >
                     {/* Left: Completion & Title */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '220px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 'min(220px, 100%)' }}>
                       <button
                         className={`task-status-btn ${isCompleted ? 'checked' : ''}`}
                         onClick={() => onToggleComplete(task.id)}

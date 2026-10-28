@@ -154,7 +154,16 @@ export default function TaskManager({
     setSortBy('priority');
   };
 
-  const hasActiveFilters = searchQuery || statusFilter !== 'all' || categoryFilter !== 'all' || difficultyFilter !== 'all' || importanceFilter !== 'all';
+  const STATUS_FILTER_LABELS = {
+    active: 'Active',
+    pending: 'Pending',
+    in_progress: 'In Progress',
+    due_today: 'Due Today',
+    overdue: 'Overdue',
+    completed: 'Completed'
+  };
+
+  const hasActiveFilters =searchQuery || statusFilter !== 'all' || categoryFilter !== 'all' || difficultyFilter !== 'all' || importanceFilter !== 'all';
 
   return (
     <div className="task-manager-view">
@@ -198,6 +207,19 @@ export default function TaskManager({
           </button>
         </div>
       </div>
+
+      {/* Active status filter banner (e.g. after clicking a dashboard card) */}
+      {statusFilter !== 'all' && (
+        <div className="filter-banner" id="task-filter-banner">
+          <span>
+            Showing <strong>{STATUS_FILTER_LABELS[statusFilter] || statusFilter}</strong> tasks · {sortedTasks.length} found
+          </span>
+          <button className="btn-secondary" onClick={() => setStatusFilter('all')} style={{ fontSize: '0.8rem', padding: '0.35rem 0.7rem' }}>
+            <X size={14} />
+            <span>Show all</span>
+          </button>
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="glass-card" style={{ padding: '1rem', marginBottom: '1.5rem' }}>
@@ -695,7 +717,7 @@ export default function TaskManager({
               </div>
 
               {/* Task Properties Table */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.85rem' }}>
+              <div className="grid-2-stack" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.85rem' }}>
                 <div style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }}>
                   <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Deadline & Time</div>
                   <div style={{ fontWeight: 600, marginTop: '2px' }}>
