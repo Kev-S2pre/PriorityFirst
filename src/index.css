@@ -4,14 +4,14 @@
    ========================================================================== */
 
 :root {
-  /* Color Palette - Dark Mode Default */
-  --bg-app: #090d16;
-  --bg-surface: #0f172a;
-  --bg-surface-elevated: #162036;
-  --bg-card: rgba(18, 26, 46, 0.75);
-  --bg-card-hover: rgba(26, 38, 66, 0.85);
-  --bg-glass: rgba(15, 23, 42, 0.65);
-  --bg-input: #0b1120;
+  /* Color Palette - Dark Mode Default (neutral accent grey backgrounds, blue kept for accents) */
+  --bg-app: #1b1c1f;
+  --bg-surface: #232428;
+  --bg-surface-elevated: #2b2d31;
+  --bg-card: rgba(39, 40, 45, 0.85);
+  --bg-card-hover: rgba(48, 50, 56, 0.92);
+  --bg-glass: rgba(30, 31, 35, 0.78);
+  --bg-input: #19191c;
   
   --border-subtle: rgba(255, 255, 255, 0.07);
   --border-card: rgba(255, 255, 255, 0.12);
@@ -70,12 +70,12 @@
 
 /* Light Theme Variables */
 [data-theme='light'] {
-  --bg-app: #f1f5f9;
-  --bg-surface: #ffffff;
-  --bg-surface-elevated: #f8fafc;
-  --bg-card: rgba(255, 255, 255, 0.9);
+  --bg-app: #e8e9eb;
+  --bg-surface: #f6f6f7;
+  --bg-surface-elevated: #efeff1;
+  --bg-card: rgba(250, 250, 251, 0.94);
   --bg-card-hover: #ffffff;
-  --bg-glass: rgba(255, 255, 255, 0.85);
+  --bg-glass: rgba(240, 240, 242, 0.88);
   --bg-input: #ffffff;
 
   --border-subtle: rgba(0, 0, 0, 0.07);
@@ -118,10 +118,8 @@ html, body {
 }
 
 body {
-  background-image: 
-    radial-gradient(circle at 15% 10%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.08) 0%, transparent 40%);
-  background-attachment: fixed;
+  /* Plain neutral grey: no blue glow behind the app */
+  background-image: none;
 }
 
 button, input, select, textarea {
@@ -902,7 +900,7 @@ a {
 
 .task-card.completed {
   opacity: 0.65;
-  background: rgba(15, 23, 42, 0.4);
+  background: var(--bg-surface-elevated);
 }
 
 .task-card.completed .task-title {
