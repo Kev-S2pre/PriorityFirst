@@ -224,16 +224,18 @@ export default function Navbar({
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
-          {/* Settings & Storage */}
-          <button 
-            className="icon-btn"
-            onClick={() => onOpenSettings('profile')}
-            title="Settings, Backups & Local Storage"
-            id="btn-settings-toggle"
-            aria-label="Open settings"
-          >
-            <Settings size={18} />
-          </button>
+          {/* Settings (Protected: there's nothing to configure before signing in) */}
+          {currentUser && (
+            <button
+              className="icon-btn"
+              onClick={() => onOpenSettings('profile')}
+              title="Settings"
+              id="btn-settings-toggle"
+              aria-label="Open settings"
+            >
+              <Settings size={18} />
+            </button>
+          )}
 
           {/* User Profile & Logout */}
           {currentUser && (

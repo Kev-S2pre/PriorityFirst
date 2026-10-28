@@ -302,20 +302,9 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
 
               {/* Password Field with Show/Hide toggle */}
               <div className="form-group">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.5rem' }}>
-                  <label className="form-label" htmlFor="login-password">
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    className="terms-link"
-                    style={{ fontSize: '0.8rem' }}
-                    id="btn-forgot-password"
-                    onClick={() => { setResetEmail(loginEmail); goTo('forgot'); }}
-                  >
-                    Forgot password?
-                  </button>
-                </div>
+                <label className="form-label" htmlFor="login-password">
+                  Password
+                </label>
                 <div style={{ position: 'relative' }}>
                   <input 
                     id="login-password"
@@ -336,6 +325,14 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
                   </button>
                 </div>
                 {fieldErrors.password && <span className="form-error">{fieldErrors.password}</span>}
+                <button
+                  type="button"
+                  className="forgot-link"
+                  id="btn-forgot-password"
+                  onClick={() => { setResetEmail(loginEmail); goTo('forgot'); }}
+                >
+                  Forgot password?
+                </button>
               </div>
 
               {/* Sign In Submit Button */}
