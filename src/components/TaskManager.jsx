@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Search, 
   Filter, 
@@ -23,16 +23,24 @@ import { TASK_CATEGORIES, categoryClassName, taskTimeSummary } from '../data/tas
 export default function TaskManager({
   tasks,
   rankedTasks,
+  initialStatusFilter = 'all',
   onOpenAddTask,
   onEditTask,
   onDeleteTask,
   onToggleComplete
 }) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [difficultyFilter, setDifficultyFilter] = useState('all');
   const [importanceFilter, setImportanceFilter] = useState('all');
+
+  // Sync initialStatusFilter if changed from navigation
+  useEffect(() => {
+    if (initialStatusFilter) {
+      setStatusFilter(initialStatusFilter);
+    }
+  }, [initialStatusFilter]);
   const [sortBy, setSortBy] = useState('priority'); // 'priority' | 'deadline_asc' | 'deadline_desc' | 'difficulty_desc' | 'duration_desc' | 'title_asc'
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
   const [selectedTaskForDetails, setSelectedTaskForDetails] = useState(null);

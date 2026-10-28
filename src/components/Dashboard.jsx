@@ -166,7 +166,15 @@ export default function Dashboard({
         {/* Metric Cards Grid */}
         <div className="stats-grid">
           {/* Total Tasks */}
-          <div className="stat-card total" id="stat-total-tasks">
+          <div 
+            className="stat-card total" 
+            id="stat-total-tasks"
+            onClick={() => onNavigateTab('tasks', 'all')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onNavigateTab('tasks', 'all'); }}
+            title="Click to view all tasks in Task Manager"
+          >
             <div className="stat-header">
               <span className="stat-label">Total Tasks</span>
               <div className="stat-icon"><Layers size={18} /></div>
@@ -176,7 +184,15 @@ export default function Dashboard({
           </div>
 
           {/* In Progress */}
-          <div className="stat-card in_progress" id="stat-in-progress">
+          <div 
+            className="stat-card in_progress" 
+            id="stat-in-progress"
+            onClick={() => onNavigateTab('tasks', 'in_progress')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onNavigateTab('tasks', 'in_progress'); }}
+            title="Click to filter by in-progress tasks"
+          >
             <div className="stat-header">
               <span className="stat-label">In Progress</span>
               <div className="stat-icon"><Hourglass size={18} /></div>
@@ -186,7 +202,15 @@ export default function Dashboard({
           </div>
 
           {/* Due Today */}
-          <div className="stat-card due_today" id="stat-due-today">
+          <div 
+            className="stat-card due_today" 
+            id="stat-due-today"
+            onClick={() => onNavigateTab('tasks', 'due_today')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onNavigateTab('tasks', 'due_today'); }}
+            title="Click to view tasks due today"
+          >
             <div className="stat-header">
               <span className="stat-label">Due Today</span>
               <div className="stat-icon"><Clock size={18} /></div>
@@ -196,7 +220,15 @@ export default function Dashboard({
           </div>
 
           {/* Overdue */}
-          <div className="stat-card overdue" id="stat-overdue">
+          <div 
+            className="stat-card overdue" 
+            id="stat-overdue"
+            onClick={() => onNavigateTab('tasks', 'overdue')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onNavigateTab('tasks', 'overdue'); }}
+            title="Click to filter by overdue tasks"
+          >
             <div className="stat-header">
               <span className="stat-label">Overdue</span>
               <div className="stat-icon"><AlertTriangle size={18} /></div>
@@ -210,7 +242,15 @@ export default function Dashboard({
           </div>
 
           {/* Completed */}
-          <div className="stat-card completed" id="stat-completed">
+          <div 
+            className="stat-card completed" 
+            id="stat-completed"
+            onClick={() => onNavigateTab('tasks', 'completed')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onNavigateTab('tasks', 'completed'); }}
+            title="Click to view completed tasks"
+          >
             <div className="stat-header">
               <span className="stat-label">Completed</span>
               <div className="stat-icon"><CheckCircle2 size={18} /></div>
@@ -222,7 +262,15 @@ export default function Dashboard({
           </div>
 
           {/* Estimated Workload Hours */}
-          <div className="stat-card total" id="stat-workload-hours">
+          <div 
+            className="stat-card total" 
+            id="stat-workload-hours"
+            onClick={() => onNavigateTab('analytics')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onNavigateTab('analytics'); }}
+            title="Click to view workload breakdown in Analytics"
+          >
             <div className="stat-header">
               <span className="stat-label">Est. Workload</span>
               <div className="stat-icon"><Clock size={18} /></div>

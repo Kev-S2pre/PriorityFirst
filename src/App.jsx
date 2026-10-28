@@ -27,6 +27,15 @@ export default function App() {
   const [tasks, setTasks] = useState(() => storageService.getTasks(currentUser?.id));
   const [settings, setSettings] = useState(() => storageService.getSettings());
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [taskManagerFilter, setTaskManagerFilter] = useState('all');
+
+  // Navigation helper that can also preset filters in TaskManager
+  const handleNavigateWithFilter = (tab, filter = 'all') => {
+    setActiveTab(tab);
+    if (filter) {
+      setTaskManagerFilter(filter);
+    }
+  };
 
   // Modals state
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -259,7 +268,7 @@ export default function App() {
                 onOpenAddTask={handleOpenAddTask}
                 onEditTask={handleEditTask}
                 onToggleComplete={handleToggleComplete}
-                onNavigateTab={setActiveTab}
+                onNavigateTab={handleNavigateWithFilter}
               />
             )}
 
@@ -267,6 +276,7 @@ export default function App() {
               <TaskManager 
                 tasks={tasks}
                 rankedTasks={rankedTasks}
+                initialStatusFilter={taskManagerFilter}
                 onOpenAddTask={handleOpenAddTask}
                 onEditTask={handleEditTask}
                 onDeleteTask={handleDeleteTask}
