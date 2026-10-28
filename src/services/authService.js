@@ -130,6 +130,7 @@ export const authService = {
       role: userRecord.classification || userRecord.role || 'Student',
       classification: userRecord.classification || userRecord.role || 'Student',
       otherDescription: userRecord.otherDescription || '',
+      avatar: userRecord.avatar || '',
       loginTimestamp: new Date().toISOString()
     };
 
@@ -247,6 +248,28 @@ export const authService = {
       classification: users[index].classification,
       otherDescription: users[index].otherDescription
     };
+    localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(sessionUser));
+    return sessionUser;
+  },
+
+  /**
+   * Sets or removes (empty string) the profile picture, stored as a small data URL
+   */
+  updateAvatar(userId, avatar = '') {
+    const users = this.getRegisteredUsers();
+    const index = users.findIndex(u => u.id === userId);
+    if (index === -1) {
+      throw new Error('Account not found. Please sign in again.');
+    }
+
+    users[index] = { ...users[index], avatar, updatedAt: new Date().toISOString() };
+    try {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+    } catch {
+      throw new Error('Not enough browser storage to save this picture. Try a smaller image.');
+    }
+
+    const sessionUser = { ...this.getCurrentUser(), avatar };
     localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(sessionUser));
     return sessionUser;
   },

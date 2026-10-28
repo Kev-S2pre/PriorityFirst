@@ -237,9 +237,11 @@ export default function Navbar({
                 }}
                 title={`Edit profile · ${currentUser.name} (${currentUser.email})`}
               >
-                <div 
-                  style={{ 
-                    width: '24px', 
+                <div
+                  className="navbar-avatar"
+                  style={{
+                    overflow: 'hidden',
+                    width: '24px',
                     height: '24px', 
                     borderRadius: 'var(--radius-full)', 
                     background: 'var(--primary-gradient)', 
@@ -251,7 +253,9 @@ export default function Navbar({
                     fontWeight: 700 
                   }}
                 >
-                  {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                  {currentUser.avatar
+                    ? <img src={currentUser.avatar} alt="" />
+                    : (currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U')}
                 </div>
                 <span style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {currentUser.name.split(' ')[0]}

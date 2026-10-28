@@ -17,6 +17,7 @@ import {
   Sun,
   Moon,
   Save,
+  Camera,
   Settings as SettingsIcon
 } from 'lucide-react';
 import { browserNotificationService, playNotificationSound } from '../services/notificationService';
@@ -42,6 +43,31 @@ function profileFromUser(user) {
     classification: user?.classification || user?.role || 'Student',
     otherDescription: user?.otherDescription || ''
   };
+}
+
+// Center-crops an image file to a small square JPEG data URL so it fits in localStorage
+function resizeImageFile(file, size = 192) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const side = Math.min(img.width, img.height);
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('This file could not be read as an image.'));
+    };
+    img.src = url;
+  });
 }
 
 function SettingRow({ icon: Icon, iconColor, title, description, children }) {
@@ -129,6 +155,36 @@ export default function SettingsModal({
       setProfileStatus({ type: 'error', message: err.message });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setProfileStatus({ type: 'error', message: 'Please choose an image file (JPG, PNG, GIF or WebP).' });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setProfileStatus({ type: 'error', message: 'Image is too large. Choose one under 10 MB.' });
+      return;
+    }
+    try {
+      const avatar = await resizeImageFile(file);
+      onProfileUpdated(authService.updateAvatar(currentUser.id, avatar));
+      setProfileStatus({ type: 'success', message: 'Profile picture updated.' });
+    } catch (err) {
+      setProfileStatus({ type: 'error', message: err.message });
+    }
+  };
+
+  const handleAvatarRemove = () => {
+    try {
+      onProfileUpdated(authService.updateAvatar(currentUser.id, ''));
+      setProfileStatus({ type: 'success', message: 'Profile picture removed.' });
+    } catch (err) {
+      setProfileStatus({ type: 'error', message: err.message });
     }
   };
 
@@ -240,12 +296,28 @@ export default function SettingsModal({
               <form onSubmit={handleProfileSave} className="settings-stack">
                 <div className="settings-profile-head">
                   <div className="settings-avatar">
-                    {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+                    {currentUser?.avatar
+                      ? <img src={currentUser.avatar} alt="Profile picture" />
+                      : (profile.name ? profile.name.charAt(0).toUpperCase() : 'U')}
                   </div>
-                  <div style={{ minWidth: 0 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis' }}>{original.name}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {original.classification} · {original.email}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.6rem' }}>
+                      <label className="btn-secondary" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', cursor: 'pointer' }} id="btn-upload-avatar">
+                        <Camera size={14} />
+                        <span>{currentUser?.avatar ? 'Change Photo' : 'Upload Photo'}</span>
+                        <input type="file" accept="image/*" onChange={handleAvatarChange} hidden id="input-avatar-file" />
+                      </label>
+                      {currentUser?.avatar && (
+                        <button type="button" className="btn-secondary" onClick={handleAvatarRemove} id="btn-remove-avatar"
+                          style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: 'var(--danger)' }}>
+                          <Trash2 size={14} />
+                          <span>Remove</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
