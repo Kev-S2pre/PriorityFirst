@@ -14,6 +14,7 @@ import {
   FileText
 } from 'lucide-react';
 import { calculateTimeRemaining } from '../services/prioritizationEngine';
+import { TASK_CATEGORIES } from '../data/taskOptions.js';
 
 export default function AnalyticsView({ tasks }) {
   const totalCount = tasks.length;
@@ -37,14 +38,11 @@ export default function AnalyticsView({ tasks }) {
   const onTimeScore = totalCount > 0 ? Math.max(0, Math.round(((totalCount - overdueCount) / totalCount) * 100)) : 100;
 
   // Category Breakdown Analysis
-  const categories = [
-    { key: 'assignment', label: 'Assignment', icon: BookOpen },
-    { key: 'project', label: 'Project', icon: FolderGit2 },
-    { key: 'laboratory activity', label: 'Laboratory Activity', icon: Activity },
-    { key: 'calculation', label: 'Calculation', icon: Calculator },
-    { key: 'report', label: 'Report', icon: FileText },
-    { key: 'personal responsibility', label: 'Personal Responsibility', icon: Layers }
-  ];
+  const categoryIcons = {
+    assignment: BookOpen, project: FolderGit2, 'laboratory activity': Activity,
+    calculation: Calculator, report: FileText, 'personal responsibility': Layers
+  };
+  const categories = TASK_CATEGORIES.map(({ value, label }) => ({ key: value, label, icon: categoryIcons[value] || Layers }));
 
   const categoryData = categories.map(cat => {
     const catTasks = tasks.filter(t => t.category === cat.key);
@@ -141,13 +139,13 @@ export default function AnalyticsView({ tasks }) {
           <div className="card-header">
             <div className="card-title">
               <Layers size={18} style={{ color: 'var(--primary)' }} />
-              <span>Coursework Category Breakdown</span>
+              <span>Task Category Breakdown</span>
             </div>
           </div>
 
           <div className="card-body">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {categoryData.map(cat => {
+              {categoryData.filter(cat => cat.totalCount > 0).map(cat => {
                 const Icon = cat.icon;
                 return (
                   <div key={cat.key}>

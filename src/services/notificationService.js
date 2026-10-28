@@ -1,5 +1,38 @@
 import { calculateTimeRemaining } from './prioritizationEngine.js';
 
+const DELIVERED_REMINDERS_KEY = 'priorityfirst_delivered_reminders_v1';
+const REMINDER_GRACE_MS = 5 * 60 * 1000;
+
+function reminderMoment(task) {
+  if (task.reminderAt) {
+    const value = new Date(task.reminderAt);
+    if (!Number.isNaN(value.getTime())) return value;
+  }
+  // Existing tasks did not have a dedicated reminder time. Preserve their behavior
+  // by using the saved deadline as the fallback reminder moment.
+  const value = new Date(`${task.deadlineDate}T${task.deadlineTime || '23:59'}:00`);
+  return Number.isNaN(value.getTime()) ? null : value;
+}
+
+function getDeliveredReminders() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(DELIVERED_REMINDERS_KEY) || '{}');
+    return saved && typeof saved === 'object' ? saved : {};
+  } catch {
+    return {};
+  }
+}
+
+function rememberDelivery(signature) {
+  const delivered = getDeliveredReminders();
+  delivered[signature] = Date.now();
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  Object.keys(delivered).forEach(key => {
+    if (delivered[key] < cutoff) delete delivered[key];
+  });
+  localStorage.setItem(DELIVERED_REMINDERS_KEY, JSON.stringify(delivered));
+}
+
 /**
  * Synthesizes a subtle, pleasant audio chime using browser Web Audio API
  * No external audio files or internet access needed
@@ -133,3 +166,43 @@ export const browserNotificationService = {
     }
   }
 };
+
+/**
+ * Checks every 15 seconds while PriorityFirst is open. The single interval is
+ * cleaned up by React on navigation/unmount, and a visibility change invokes an
+ * immediate catch-up check. Background browser throttling can delay this timer.
+ */
+export function startReminderScheduler(tasks, settings, onReminder) {
+  const check = () => {
+    if (!settings.browserNotificationsEnabled || browserNotificationService.getPermission() !== 'granted') return;
+    const now = Date.now();
+    const delivered = getDeliveredReminders();
+
+    tasks.filter(task => task.status !== 'completed').forEach(task => {
+      const dueAt = reminderMoment(task);
+      if (!dueAt) return;
+      const signature = `${task.id}:${dueAt.toISOString()}`;
+      const delay = now - dueAt.getTime();
+      if (delay < 0 || delay > REMINDER_GRACE_MS || delivered[signature]) return;
+
+      const notification = browserNotificationService.send('PriorityFirst reminder', {
+        body: `"${task.title}" is scheduled now.`,
+        tag: `priorityfirst-${signature}`,
+        renotify: false
+      });
+      if (notification) {
+        rememberDelivery(signature);
+        onReminder?.(task);
+      }
+    });
+  };
+
+  check();
+  const intervalId = window.setInterval(check, 15_000);
+  const handleVisibility = () => check();
+  document.addEventListener('visibilitychange', handleVisibility);
+  return () => {
+    window.clearInterval(intervalId);
+    document.removeEventListener('visibilitychange', handleVisibility);
+  };
+}

@@ -9,13 +9,13 @@ import TaskModal from './components/TaskModal';
 import SettingsModal from './components/SettingsModal';
 import AuthView from './components/AuthView';
 
-import { storageService, DEFAULT_WEIGHTS, DEFAULT_SETTINGS } from './services/storageService';
+import { storageService, DEFAULT_WEIGHTS } from './services/storageService';
 import { authService } from './services/authService';
 import { prioritizeTasks } from './services/prioritizationEngine';
 import { 
   generateNotifications, 
-  browserNotificationService, 
-  playNotificationSound 
+  playNotificationSound,
+  startReminderScheduler
 } from './services/notificationService';
 
 export default function App() {
@@ -23,7 +23,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUser());
 
   // Load tasks and settings from localStorage
-  const [tasks, setTasks] = useState(() => storageService.getTasks());
+  const [tasks, setTasks] = useState(() => storageService.getTasks(currentUser?.id));
   const [settings, setSettings] = useState(() => storageService.getSettings());
   const [activeTab, setActiveTab] = useState('dashboard');
 
@@ -46,6 +46,14 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', settings.theme || 'dark');
   }, [settings.theme]);
+
+  useEffect(() => {
+    if (!currentUser) return undefined;
+    return startReminderScheduler(tasks, settings, (task) => {
+      if (settings.soundAlertsEnabled) playNotificationSound();
+      showToast(`Reminder: ${task.title}`, 'info');
+    });
+  }, [currentUser, tasks, settings, showToast]);
 
   // Compute prioritized tasks deterministically using active weights
   const rankedTasks = useMemo(() => {
@@ -71,6 +79,7 @@ export default function App() {
   // Authentication Session Handlers
   const handleAuthSuccess = (user) => {
     setCurrentUser(user);
+    setTasks(storageService.getTasks(user.id));
     setActiveTab('dashboard');
     showToast(
       user.isDemo 
@@ -100,12 +109,12 @@ export default function App() {
   const handleSaveTask = (taskData) => {
     try {
       if (taskToEdit) {
-        const updated = storageService.updateTask(taskToEdit.id, taskData);
-        setTasks(storageService.getTasks());
+        const updated = storageService.updateTask(taskToEdit.id, taskData, currentUser?.id);
+        setTasks(storageService.getTasks(currentUser?.id));
         showToast(`Task "${updated.title}" updated successfully`, 'success');
       } else {
-        const created = storageService.createTask(taskData);
-        setTasks(storageService.getTasks());
+        const created = storageService.createTask(taskData, currentUser?.id);
+        setTasks(storageService.getTasks(currentUser?.id));
         showToast(`New task "${created.title}" added to queue`, 'success');
       }
     } catch (err) {
@@ -115,16 +124,16 @@ export default function App() {
 
   const handleDeleteTask = (id, title) => {
     if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
-      storageService.deleteTask(id);
-      setTasks(storageService.getTasks());
+      storageService.deleteTask(id, currentUser?.id);
+      setTasks(storageService.getTasks(currentUser?.id));
       showToast(`Task "${title}" removed`, 'info');
     }
   };
 
   const handleToggleComplete = (id) => {
-    const updated = storageService.toggleComplete(id);
+    const updated = storageService.toggleComplete(id, currentUser?.id);
     if (updated) {
-      setTasks(storageService.getTasks());
+      setTasks(storageService.getTasks(currentUser?.id));
       const isDone = updated.status === 'completed';
       showToast(
         isDone ? `✓ Completed: "${updated.title}"` : `Reopened: "${updated.title}"`,
@@ -155,7 +164,7 @@ export default function App() {
 
   // Backup & Restore
   const handleExportBackup = () => {
-    const jsonStr = storageService.exportBackup();
+    const jsonStr = storageService.exportBackup(currentUser?.id);
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -170,7 +179,7 @@ export default function App() {
 
   const handleImportBackup = (jsonString) => {
     try {
-      const imported = storageService.importBackup(jsonString);
+      const imported = storageService.importBackup(jsonString, currentUser?.id);
       setTasks(imported);
       setSettings(storageService.getSettings());
       showToast(`Successfully imported ${imported.length} tasks`, 'success');
@@ -182,14 +191,14 @@ export default function App() {
 
   const handleResetSampleData = () => {
     if (window.confirm('Reset current tasks to the standard Engineering Student sample dataset?')) {
-      const samples = storageService.loadSampleData();
+      const samples = storageService.loadSampleData(currentUser?.id);
       setTasks(samples);
       showToast('Restored engineering coursework sample tasks', 'success');
     }
   };
 
   const handleClearAllTasks = () => {
-    const cleared = storageService.clearAllTasks();
+    const cleared = storageService.clearAllTasks(currentUser?.id);
     setTasks(cleared);
     showToast('All tasks cleared from local storage', 'info');
   };
@@ -296,6 +305,7 @@ export default function App() {
       {/* Transient Notification Toast */}
       {toast && (
         <div 
+          className="app-toast"
           style={{
             position: 'fixed',
             bottom: '24px',

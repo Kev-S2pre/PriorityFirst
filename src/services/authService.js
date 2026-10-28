@@ -155,9 +155,11 @@ export const authService = {
       id: userRecord.id,
       name: userRecord.name,
       email: userRecord.email,
-      institution: userRecord.institution || 'Engineering Institute',
-      department: userRecord.department || 'General Engineering',
-      role: userRecord.role || 'Student',
+      institution: userRecord.institution || '',
+      department: userRecord.department || '',
+      role: userRecord.classification || userRecord.role || 'Student',
+      classification: userRecord.classification || userRecord.role || 'Student',
+      otherDescription: userRecord.otherDescription || '',
       loginTimestamp: new Date().toISOString()
     };
 
@@ -169,7 +171,7 @@ export const authService = {
    * Register a new student account
    * MANDATORY: Does NOT automatically log the user in.
    */
-  async register({ name, email, password, confirmPassword, institution = '', department = '' }) {
+  async register({ name, email, password, confirmPassword, institution = '', department = '', classification = 'Student', otherDescription = '' }) {
     await this.init();
 
     const cleanName = (name || '').trim();
@@ -183,7 +185,7 @@ export const authService = {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(cleanEmail)) {
-      throw new Error('Please provide a valid academic email address.');
+      throw new Error('Please provide a valid email address.');
     }
 
     if (!cleanPassword || cleanPassword.length < 6) {
@@ -209,9 +211,11 @@ export const authService = {
       email: cleanEmail,
       salt,
       passwordHash,
-      institution: institution.trim() || 'College of Engineering',
-      department: department.trim() || 'General Engineering',
-      role: 'Student',
+      institution: institution.trim(),
+      department: department.trim(),
+      role: classification,
+      classification: ['Student', 'Professional', 'Worker', 'Athlete', 'Other'].includes(classification) ? classification : 'Other',
+      otherDescription: otherDescription.trim(),
       createdAt: new Date().toISOString()
     };
 

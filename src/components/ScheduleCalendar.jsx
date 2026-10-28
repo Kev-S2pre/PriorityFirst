@@ -12,6 +12,7 @@ import {
   Edit3
 } from 'lucide-react';
 import { calculateTimeRemaining } from '../services/prioritizationEngine.js';
+import { categoryClassName, taskTimeSummary } from '../data/taskOptions.js';
 
 // Calculate exact Day of Year (1 - 366)
 function getDayOfYear(d) {
@@ -680,7 +681,7 @@ export default function ScheduleCalendar({
 
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '3px' }}>
-                          <span className={`category-badge category-${task.category ? task.category.split(' ')[0] : 'assignment'}`} style={{ fontSize: '11px', padding: '1px 6px' }}>
+                          <span className={`category-badge ${categoryClassName(task.category)}`} style={{ fontSize: '11px', padding: '1px 6px' }}>
                             {task.category}
                           </span>
                           <span style={{ fontSize: '11px', fontWeight: 700, color: task.importance === 'Critical' ? 'var(--danger)' : 'var(--text-secondary)' }}>
@@ -714,7 +715,7 @@ export default function ScheduleCalendar({
                         <Clock size={14} style={{ color: 'var(--text-muted)' }} />
                         <span>Due {task.deadlineTime || '23:59'}</span>
                         <span>•</span>
-                        <span>{task.estimatedHours}h</span>
+                        <span>{taskTimeSummary(task).range || taskTimeSummary(task).duration}</span>
                       </div>
 
                       <button

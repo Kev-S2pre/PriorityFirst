@@ -230,7 +230,7 @@ export default function Navbar({
 
           {/* User Profile & Logout */}
           {currentUser && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginLeft: '0.25rem', paddingLeft: '0.5rem', borderLeft: '1px solid var(--border-subtle)' }}>
+            <div className="navbar-profile" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginLeft: '0.25rem', paddingLeft: '0.5rem', borderLeft: '1px solid var(--border-subtle)' }}>
               <div 
                 style={{ 
                   display: 'flex', 
@@ -243,7 +243,7 @@ export default function Navbar({
                   fontSize: '0.8rem',
                   fontWeight: 600
                 }}
-                title={`${currentUser.name} (${currentUser.email})`}
+                title={`${currentUser.name} · ${currentUser.classification || currentUser.role || 'User'} (${currentUser.email})`}
               >
                 <div 
                   style={{ 

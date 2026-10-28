@@ -18,6 +18,7 @@ import {
   List
 } from 'lucide-react';
 import { calculateTimeRemaining } from '../services/prioritizationEngine';
+import { TASK_CATEGORIES, categoryClassName, taskTimeSummary } from '../data/taskOptions.js';
 
 export default function TaskManager({
   tasks,
@@ -156,7 +157,7 @@ export default function TaskManager({
             Task Management
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-            Create, track, filter, and organize academic coursework and engineering tasks.
+            Create, track, filter, and organize tasks across study, work, training, and personal life.
           </p>
         </div>
 
@@ -242,12 +243,9 @@ export default function TaskManager({
               aria-label="Filter by Category"
             >
               <option value="all">Category: All</option>
-              <option value="assignment">Assignment</option>
-              <option value="project">Project</option>
-              <option value="laboratory activity">Laboratory Activity</option>
-              <option value="calculation">Calculation</option>
-              <option value="report">Report</option>
-              <option value="personal responsibility">Personal Responsibility</option>
+              {TASK_CATEGORIES.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
             </select>
 
             {/* Difficulty Filter */}
@@ -373,7 +371,7 @@ export default function TaskManager({
 
                     <div className="task-title-group">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
-                        <span className={`category-badge category-${task.category ? task.category.split(' ')[0] : 'assignment'}`}>
+                        <span className={`category-badge ${categoryClassName(task.category)}`}>
                           {task.category}
                         </span>
 
@@ -413,7 +411,9 @@ export default function TaskManager({
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <Clock size={14} style={{ color: 'var(--text-muted)' }} />
-                        <span style={{ fontFamily: 'var(--font-mono)' }}>{task.estimatedHours}h</span>
+                        <span style={{ fontFamily: 'var(--font-mono)' }} title={taskTimeSummary(task).range || 'Estimated duration'}>
+                          {taskTimeSummary(task).range || taskTimeSummary(task).duration}
+                        </span>
                       </div>
                     </div>
 
@@ -549,7 +549,7 @@ export default function TaskManager({
                         </span>
                       </td>
                       <td style={{ padding: '0.75rem 1rem' }}>
-                        <span className={`category-badge category-${task.category ? task.category.split(' ')[0] : 'assignment'}`}>
+                        <span className={`category-badge ${categoryClassName(task.category)} `}>
                           {task.category}
                         </span>
                       </td>
@@ -560,7 +560,7 @@ export default function TaskManager({
                         L{task.difficulty}
                       </td>
                       <td style={{ padding: '0.75rem 1rem', fontFamily: 'var(--font-mono)' }}>
-                        {task.estimatedHours}h
+                        {taskTimeSummary(task).range || taskTimeSummary(task).duration}
                       </td>
                       <td style={{ padding: '0.75rem 1rem' }}>
                         {task.importance}
@@ -600,7 +600,7 @@ export default function TaskManager({
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span className={`category-badge category-${selectedTaskForDetails.category ? selectedTaskForDetails.category.split(' ')[0] : 'assignment'}`}>
+                <span className={`category-badge ${categoryClassName(selectedTaskForDetails.category)} `}>
                   {selectedTaskForDetails.category}
                 </span>
                 <h3 className="modal-title" style={{ fontSize: '1.1rem' }}>
@@ -698,7 +698,9 @@ export default function TaskManager({
                 <div style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }}>
                   <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Estimated Completion Time</div>
                   <div style={{ fontWeight: 600, marginTop: '2px' }}>
-                    {selectedTaskForDetails.estimatedHours} hours
+                    {taskTimeSummary(selectedTaskForDetails).range
+                      ? <><span>{taskTimeSummary(selectedTaskForDetails).range}</span><br /><span>{taskTimeSummary(selectedTaskForDetails).duration}</span></>
+                      : taskTimeSummary(selectedTaskForDetails).duration}
                   </div>
                 </div>
 

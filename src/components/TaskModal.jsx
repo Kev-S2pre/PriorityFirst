@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, AlertCircle, Clock, Calendar } from 'lucide-react';
+import { TASK_CATEGORIES, durationFromTimes, formatDuration, formatTime } from '../data/taskOptions.js';
 
 export default function TaskModal({
   isOpen,
@@ -15,6 +16,9 @@ export default function TaskModal({
   const [deadlineTime, setDeadlineTime] = useState('23:59');
   const [difficulty, setDifficulty] = useState(3);
   const [estimatedHours, setEstimatedHours] = useState(2.0);
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [reminderAt, setReminderAt] = useState('');
   const [importance, setImportance] = useState('Medium');
   const [status, setStatus] = useState('pending');
   const [notes, setNotes] = useState('');
@@ -29,6 +33,9 @@ export default function TaskModal({
       setDeadlineTime(taskToEdit.deadlineTime || '23:59');
       setDifficulty(Number(taskToEdit.difficulty) || 3);
       setEstimatedHours(Number(taskToEdit.estimatedHours) || 2.0);
+      setStartTime(taskToEdit.startTime || taskToEdit.scheduledStartTime || '');
+      setEndTime(taskToEdit.endTime || '');
+      setReminderAt(taskToEdit.reminderAt || '');
       setImportance(taskToEdit.importance || 'Medium');
       setStatus(taskToEdit.status || 'pending');
       setNotes(taskToEdit.notes || '');
@@ -52,6 +59,9 @@ export default function TaskModal({
       setDeadlineTime('23:59');
       setDifficulty(3);
       setEstimatedHours(2.0);
+      setStartTime('');
+      setEndTime('');
+      setReminderAt('');
       setImportance('Medium');
       setStatus('pending');
       setNotes('');
@@ -69,7 +79,11 @@ export default function TaskModal({
     if (!deadlineDate) {
       newErrors.deadlineDate = 'Deadline date is required.';
     }
-    if (!estimatedHours || Number(estimatedHours) <= 0) {
+    const scheduledDuration = durationFromTimes(startTime, endTime);
+    if ((startTime || endTime) && scheduledDuration === null) {
+      newErrors.timeRange = 'Choose an end time later than the start time. Overnight scheduling is not supported.';
+    }
+    if (scheduledDuration === null && (!estimatedHours || Number(estimatedHours) <= 0)) {
       newErrors.estimatedHours = 'Estimated hours must be greater than 0.';
     }
     setErrors(newErrors);
@@ -87,7 +101,10 @@ export default function TaskModal({
       deadlineDate,
       deadlineTime: deadlineTime || '23:59',
       difficulty: Number(difficulty),
-      estimatedHours: Number(estimatedHours),
+      estimatedHours: durationFromTimes(startTime, endTime) ?? Number(estimatedHours),
+      startTime: startTime || null,
+      endTime: endTime || null,
+      reminderAt: reminderAt || null,
       importance,
       status,
       notes: notes.trim()
@@ -158,12 +175,9 @@ export default function TaskModal({
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                 >
-                  <option value="assignment">Assignment</option>
-                  <option value="project">Project</option>
-                  <option value="laboratory activity">Laboratory Activity</option>
-                  <option value="calculation">Calculation</option>
-                  <option value="report">Report</option>
-                  <option value="personal responsibility">Personal Responsibility</option>
+                  {TASK_CATEGORIES.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
                 </select>
               </div>
 
@@ -214,6 +228,50 @@ export default function TaskModal({
               </div>
             </div>
 
+            {/* Scheduled time range */}
+            <div className="form-row-2">
+              <div className="form-group">
+                <label className="form-label" htmlFor="task-start-time-input">Scheduled Start Time (Optional)</label>
+                <input
+                  id="task-start-time-input"
+                  type="time"
+                  className="form-input"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="task-end-time-input">Scheduled End Time (Optional)</label>
+                <input
+                  id="task-end-time-input"
+                  type="time"
+                  className="form-input"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                />
+              </div>
+              {(startTime || endTime) && (
+                <div className="time-range-summary" role="status">
+                  {durationFromTimes(startTime, endTime) !== null
+                    ? <>Estimated time: {formatTime(startTime)} – {formatTime(endTime)} · Duration: {formatDuration(durationFromTimes(startTime, endTime))}</>
+                    : 'Add both times, with the end time after the start time.'}
+                </div>
+              )}
+              {errors.timeRange && <span className="form-error">{errors.timeRange}</span>}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="task-reminder-input">Reminder time (optional)</label>
+              <input
+                id="task-reminder-input"
+                type="datetime-local"
+                className="form-input"
+                value={reminderAt}
+                onChange={(e) => setReminderAt(e.target.value)}
+              />
+              <span className="form-hint">If blank, PriorityFirst reminds you at the deadline. Desktop permissions are required.</span>
+            </div>
+
             {/* Difficulty, Estimated Hours, Importance */}
             <div className="form-row-3">
               <div className="form-group">
@@ -236,7 +294,7 @@ export default function TaskModal({
 
               <div className="form-group">
                 <label className="form-label" htmlFor="task-hours-input">
-                  Est. Hours <span style={{ color: 'var(--danger)' }}>*</span>
+                  Est. Hours {!(startTime && endTime) && <span style={{ color: 'var(--danger)' }}>*</span>}
                 </label>
                 <input 
                   id="task-hours-input"
@@ -246,6 +304,7 @@ export default function TaskModal({
                   className="form-input"
                   value={estimatedHours}
                   onChange={(e) => setEstimatedHours(e.target.value)}
+                  disabled={durationFromTimes(startTime, endTime) !== null}
                 />
                 {errors.estimatedHours && <span className="form-error">{errors.estimatedHours}</span>}
               </div>

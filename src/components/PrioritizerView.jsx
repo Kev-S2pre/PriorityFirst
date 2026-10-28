@@ -15,6 +15,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { PRESET_WEIGHTS } from '../services/prioritizationEngine';
+import { categoryClassName, taskTimeSummary } from '../data/taskOptions.js';
 
 export default function PrioritizerView({
   rankedTasks,
@@ -256,7 +257,7 @@ export default function PrioritizerView({
                         Rank #{task.rank}
                       </span>
 
-                      <span className={`category-badge category-${task.category ? task.category.split(' ')[0] : 'assignment'}`}>
+                      <span className={`category-badge ${categoryClassName(task.category)} `}>
                         {task.category}
                       </span>
 
@@ -350,7 +351,7 @@ export default function PrioritizerView({
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                     <Clock size={14} style={{ color: 'var(--text-muted)' }} />
-                    <span>Est: {task.estimatedHours}h</span>
+                    <span>{taskTimeSummary(task).range || `Duration: ${taskTimeSummary(task).duration}`}</span>
                   </div>
 
                   <div>
@@ -391,7 +392,7 @@ export default function PrioritizerView({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />
                   <span style={{ textDecoration: 'line-through' }}>{task.title}</span>
-                  <span className={`category-badge category-${task.category ? task.category.split(' ')[0] : 'assignment'}`}>
+                  <span className={`category-badge ${categoryClassName(task.category)} `}>
                     {task.category}
                   </span>
                 </div>

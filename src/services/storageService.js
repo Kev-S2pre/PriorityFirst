@@ -1,4 +1,5 @@
 import { generateSampleTasks } from '../data/sampleTasks.js';
+import { durationFromTimes } from '../data/taskOptions.js';
 
 const TASKS_KEY = 'priorityfirst_tasks_v1';
 const INITIALIZED_KEY = 'priorityfirst_initialized_v1';
@@ -43,6 +44,9 @@ function isValidTask(task) {
  * Sanitizes and normalizes a task object
  */
 function sanitizeTask(task) {
+  const startTime = task.startTime || task.scheduledStartTime || null;
+  const endTime = task.endTime || null;
+  const scheduledDuration = durationFromTimes(startTime, endTime);
   return {
     id: task.id || `task-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     title: (task.title || 'Untitled Task').trim(),
@@ -51,13 +55,17 @@ function sanitizeTask(task) {
     deadlineDate: task.deadlineDate || new Date().toISOString().split('T')[0],
     deadlineTime: task.deadlineTime || '23:59',
     difficulty: Math.max(1, Math.min(5, Number(task.difficulty) || 3)),
-    estimatedHours: Math.max(0.1, Number(task.estimatedHours) || 1.0),
+    // Legacy duration-only tasks retain their duration. Time-ranged tasks are the source of truth.
+    estimatedHours: scheduledDuration ?? Math.max(0.1, Number(task.estimatedHours) || 1.0),
     importance: ['Low', 'Medium', 'High', 'Critical'].includes(task.importance) ? task.importance : 'Medium',
     status: ['pending', 'in_progress', 'completed', 'overdue'].includes(task.status) ? task.status : 'pending',
     notes: (task.notes || '').trim(),
     createdAt: task.createdAt || new Date().toISOString(),
     completedAt: task.completedAt || null,
-    scheduledStartTime: task.scheduledStartTime || null,
+    startTime,
+    endTime,
+    scheduledStartTime: startTime,
+    reminderAt: typeof task.reminderAt === 'string' && task.reminderAt ? task.reminderAt : null,
   };
 }
 

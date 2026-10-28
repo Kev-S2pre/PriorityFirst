@@ -18,6 +18,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import { calculateTimeRemaining } from '../services/prioritizationEngine';
+import { TASK_CATEGORIES, categoryClassName, taskTimeSummary } from '../data/taskOptions.js';
 
 export default function Dashboard({
   tasks,
@@ -66,7 +67,7 @@ export default function Dashboard({
     .slice(0, 4);
 
   // Workload by Category
-  const categoryStats = {
+  const categoryIconMap = {
     'assignment': { count: 0, hours: 0, label: 'Assignment', icon: BookOpen },
     'project': { count: 0, hours: 0, label: 'Project', icon: FolderGit2 },
     'laboratory activity': { count: 0, hours: 0, label: 'Lab Activity', icon: Activity },
@@ -74,6 +75,10 @@ export default function Dashboard({
     'report': { count: 0, hours: 0, label: 'Report', icon: FileText },
     'personal responsibility': { count: 0, hours: 0, label: 'Personal', icon: Layers }
   };
+  const categoryStats = Object.fromEntries(TASK_CATEGORIES.map(({ value, label }) => [
+    value,
+    { count: 0, hours: 0, label, icon: categoryIconMap[value]?.icon || Layers }
+  ]));
 
   activeTasks.forEach(t => {
     const cat = t.category || 'assignment';
@@ -91,7 +96,7 @@ export default function Dashboard({
           <div className="hero-welcome">
             <h1>PriorityFirst Overview</h1>
             <p>
-              Real-time analysis and multi-criteria prioritization for engineering coursework and critical responsibilities.
+              Real-time analysis and multi-criteria prioritization for studies, work, training, and personal responsibilities.
             </p>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -279,7 +284,7 @@ export default function Dashboard({
                       <div className="action-top-row">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <span className="rank-badge">#{task.rank} Priority</span>
-                          <span className={`category-badge category-${task.category ? task.category.split(' ')[0] : 'assignment'}`}>
+                          <span className={`category-badge ${categoryClassName(task.category)} `}>
                             {task.category}
                           </span>
                         </div>
@@ -328,7 +333,9 @@ export default function Dashboard({
                         </div>
                         <div className="meta-item">
                           <Clock size={14} style={{ color: 'var(--text-muted)' }} />
-                          <span>Est: {task.estimatedHours} hrs</span>
+                          <span title={taskTimeSummary(task).range || 'Estimated duration'}>
+                            {taskTimeSummary(task).range ? `Time: ${taskTimeSummary(task).range}` : `Duration: ${taskTimeSummary(task).duration}`}
+                          </span>
                         </div>
                         <div className="meta-item">
                           <span className="difficulty-pill">
@@ -405,7 +412,7 @@ export default function Dashboard({
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', gap: '0.5rem', marginTop: '2px' }}>
                             <span>{t.category}</span>
                             <span>•</span>
-                            <span>{t.estimatedHours}h est.</span>
+                            <span>{taskTimeSummary(t).range || taskTimeSummary(t).duration}</span>
                           </div>
                         </div>
 

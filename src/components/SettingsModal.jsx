@@ -188,7 +188,7 @@ export default function SettingsModal({
                   <div>
                     <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>Desktop Notifications</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      Status: {notificationPermission} (Works while browser tab is open)
+                      Status: {notificationPermission}. Reminders run while PriorityFirst remains open; a background tab may be delayed by Chrome.
                     </div>
                   </div>
                 </div>
@@ -201,6 +201,11 @@ export default function SettingsModal({
                   {notificationPermission === 'granted' ? 'Enabled' : 'Request Permission'}
                 </button>
               </div>
+              {notificationPermission === 'denied' && (
+                <p className="form-hint" style={{ color: 'var(--danger)' }}>
+                  Notifications are blocked by your browser. Enable them in the site permissions, then reopen this panel.
+                </p>
+              )}
 
               {/* Sound Alerts */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--bg-card)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>

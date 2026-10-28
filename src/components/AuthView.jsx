@@ -29,8 +29,10 @@ export default function AuthView({ onAuthSuccess }) {
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
-  const [regDepartment, setRegDepartment] = useState('Mechanical Engineering');
-  const [regInstitution, setRegInstitution] = useState('Faculty of Engineering');
+  const [regDepartment, setRegDepartment] = useState('');
+  const [regInstitution, setRegInstitution] = useState('');
+  const [regClassification, setRegClassification] = useState('Student');
+  const [regOtherDescription, setRegOtherDescription] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
 
@@ -91,7 +93,7 @@ export default function AuthView({ onAuthSuccess }) {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!regEmail.trim() || !emailRegex.test(regEmail.trim())) {
-      errors.email = 'Please provide a valid academic email address.';
+      errors.email = 'Please provide a valid email address.';
     }
 
     if (!regPassword || regPassword.length < 6) {
@@ -116,7 +118,9 @@ export default function AuthView({ onAuthSuccess }) {
         password: regPassword,
         confirmPassword: regConfirmPassword,
         institution: regInstitution,
-        department: regDepartment
+        department: regDepartment,
+        classification: regClassification,
+        otherDescription: regOtherDescription
       });
 
       // MANDATORY REQUIREMENT: Do NOT automatically log in after registration!
@@ -131,6 +135,10 @@ export default function AuthView({ onAuthSuccess }) {
       setRegEmail('');
       setRegPassword('');
       setRegConfirmPassword('');
+      setRegDepartment('');
+      setRegInstitution('');
+      setRegClassification('Student');
+      setRegOtherDescription('');
       setFieldErrors({});
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
@@ -162,7 +170,7 @@ export default function AuthView({ onAuthSuccess }) {
             PriorityFirst <span className="brand-badge">PF</span>
           </h1>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Engineering Task Prioritization & Academic Scheduling
+            Task prioritization and scheduling for everyday life
           </p>
         </div>
 
@@ -345,14 +353,14 @@ export default function AuthView({ onAuthSuccess }) {
 
               <div className="form-group">
                 <label className="form-label" htmlFor="reg-email">
-                  Academic Email <span style={{ color: 'var(--danger)' }}>*</span>
+                  Email <span style={{ color: 'var(--danger)' }}>*</span>
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input 
                     id="reg-email"
                     type="email"
                     className="form-input"
-                    placeholder="maria.santos@university.edu"
+                    placeholder="maria@example.com"
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
                     autoComplete="email"
@@ -364,38 +372,65 @@ export default function AuthView({ onAuthSuccess }) {
 
               <div className="form-row-2">
                 <div className="form-group">
-                  <label className="form-label" htmlFor="reg-department">
-                    Department
+                  <label className="form-label" htmlFor="reg-classification">
+                    Primary classification
                   </label>
                   <select 
-                    id="reg-department"
+                    id="reg-classification"
                     className="form-select"
-                    value={regDepartment}
-                    onChange={(e) => setRegDepartment(e.target.value)}
+                    value={regClassification}
+                    onChange={(e) => setRegClassification(e.target.value)}
                   >
-                    <option value="Civil & Structural Engineering">Civil & Structural Engineering</option>
-                    <option value="Mechanical Engineering">Mechanical Engineering</option>
-                    <option value="Electrical & Electronics">Electrical & Electronics</option>
-                    <option value="Chemical Engineering">Chemical Engineering</option>
-                    <option value="Computer & Software Eng">Computer & Software Eng</option>
-                    <option value="Industrial Engineering">Industrial Engineering</option>
+                    <option value="Student">Student</option>
+                    <option value="Professional">Professional</option>
+                    <option value="Worker">Worker</option>
+                    <option value="Athlete">Athlete</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
 
                 <div className="form-group">
                   <label className="form-label" htmlFor="reg-institution">
-                    Institution / University
+                    Institution / organization (optional)
                   </label>
                   <input 
                     id="reg-institution"
                     type="text"
                     className="form-input"
-                    placeholder="e.g. University of Technology"
+                    placeholder="e.g. University or workplace"
                     value={regInstitution}
                     onChange={(e) => setRegInstitution(e.target.value)}
                   />
                 </div>
               </div>
+
+              {regClassification === 'Student' && (
+                <div className="form-group">
+                  <label className="form-label" htmlFor="reg-department">Course / program (optional)</label>
+                  <input
+                    id="reg-department"
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Mechanical Engineering, Arts, Nursing"
+                    value={regDepartment}
+                    onChange={(e) => setRegDepartment(e.target.value)}
+                  />
+                </div>
+              )}
+
+              {regClassification === 'Other' && (
+                <div className="form-group">
+                  <label className="form-label" htmlFor="reg-other-description">Tell us more (optional)</label>
+                  <input
+                    id="reg-other-description"
+                    type="text"
+                    className="form-input"
+                    placeholder="How would you describe your role?"
+                    value={regOtherDescription}
+                    onChange={(e) => setRegOtherDescription(e.target.value)}
+                  />
+                </div>
+              )}
 
               <div className="form-row-2">
                 <div className="form-group">
