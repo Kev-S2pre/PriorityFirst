@@ -10,71 +10,27 @@ import {
   Volume2,
   ShieldCheck,
   AlertTriangle,
-  User,
   Lock,
-  Palette,
+  Mail,
   SlidersHorizontal,
   Sun,
   Moon,
-  Save,
-  Camera,
   Settings as SettingsIcon
 } from 'lucide-react';
 import { browserNotificationService, playNotificationSound } from '../services/notificationService';
-import { authService } from '../services/authService';
+import { securityService } from '../services/securityService';
 import { isCloudEnabled } from '../services/cloudSync';
-import InstitutionFields from './InstitutionFields';
 import PasswordStrength from './PasswordStrength';
-import { defaultInstitutionType, isValidDepartment } from '../data/profileOptions';
 
+// Settings: how the app behaves. Identity (name, photo, institution) lives in My Profile.
 const SECTIONS = [
-  { id: 'profile', label: 'Profile', icon: User },
-  { id: 'security', label: 'Password & Security', icon: Lock },
-  { id: 'appearance', label: 'Appearance', icon: Palette },
+  { id: 'general', label: 'General', icon: SlidersHorizontal },
   { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'preferences', label: 'Planning Preferences', icon: SlidersHorizontal },
-  { id: 'data', label: 'Data & Storage', icon: HardDrive }
+  { id: 'security', label: 'Security', icon: Lock },
+  { id: 'data', label: 'Privacy & Data', icon: HardDrive }
 ];
 
-const CLASSIFICATIONS = ['Student', 'Professional', 'Worker', 'Athlete', 'Other'];
-
-function profileFromUser(user) {
-  return {
-    name: user?.name || '',
-    email: user?.email || '',
-    institution: user?.institution || '',
-    institutionId: user?.institutionId || '',
-    institutionType: user?.institutionType || defaultInstitutionType(user?.classification || user?.role),
-    department: user?.department || '',
-    classification: user?.classification || user?.role || 'Student',
-    otherDescription: user?.otherDescription || ''
-  };
-}
-
-// Center-crops an image file to a small square JPEG data URL so it fits in localStorage
-function resizeImageFile(file, size = 192) {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const side = Math.min(img.width, img.height);
-      const canvas = document.createElement('canvas');
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, size, size);
-      ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
-      URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL('image/jpeg', 0.85));
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('This file could not be read as an image.'));
-    };
-    img.src = url;
-  });
-}
+const SETTINGS_SECTIONS = SECTIONS.map(s => s.id);
 
 function SettingRow({ icon: Icon, iconColor, title, description, children }) {
   return (
@@ -109,9 +65,9 @@ function Toggle({ checked, onChange, label }) {
 export default function SettingsModal({
   isOpen,
   onClose,
-  initialSection = 'profile',
+  initialSection = 'general',
   currentUser,
-  onProfileUpdated,
+  onAccountUpdated,
   onExportBackup,
   onImportBackup,
   onResetSampleData,
@@ -121,8 +77,8 @@ export default function SettingsModal({
   tasksCount
 }) {
   const [section, setSection] = useState(initialSection);
-  const [profile, setProfile] = useState(() => profileFromUser(currentUser));
-  const [profileStatus, setProfileStatus] = useState({ type: '', message: '' });
+  const [newEmail, setNewEmail] = useState('');
+  const [emailStatus, setEmailStatus] = useState({ type: '', message: '' });
   const [passwords, setPasswords] = useState({ current: '', next: '', confirm: '' });
   const [passwordStatus, setPasswordStatus] = useState({ type: '', message: '' });
   const [isSaving, setIsSaving] = useState(false);
@@ -131,71 +87,39 @@ export default function SettingsModal({
   const [importError, setImportError] = useState('');
   const [confirmClear, setConfirmClear] = useState(false);
 
-  // Reset form state each time the window opens (not on profile save, so the status message stays)
+  // Reset form state each time the window opens
   useEffect(() => {
     if (isOpen) {
-      setSection(initialSection);
-      setProfile(profileFromUser(currentUser));
-      setProfileStatus({ type: '', message: '' });
+      setSection(SETTINGS_SECTIONS.includes(initialSection) ? initialSection : 'general');
+      setNewEmail('');
+      setEmailStatus({ type: '', message: '' });
       setPasswords({ current: '', next: '', confirm: '' });
       setPasswordStatus({ type: '', message: '' });
       setConfirmClear(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialSection]);
 
   if (!isOpen) return null;
 
   const notificationPermission = browserNotificationService.getPermission();
-  const original = profileFromUser(currentUser);
-  const profileDirty = Object.keys(profile).some(key => profile[key] !== original[key]);
 
-  const handleProfileSave = async (e) => {
+  const handleEmailSave = async (e) => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const updated = await authService.updateProfile(currentUser.id, profile);
-      onProfileUpdated(updated);
-      setProfileStatus({
+      const updated = await securityService.changeEmail(currentUser, newEmail);
+      onAccountUpdated(updated);
+      setNewEmail('');
+      setEmailStatus({
         type: 'success',
-        message: updated.pendingEmail && updated.pendingEmail !== updated.email
-          ? `Profile saved. Click the link sent to ${updated.pendingEmail} to finish changing your email.`
-          : 'Profile saved.'
+        message: isCloudEnabled
+          ? `Check ${updated.pendingEmail || newEmail} and click the confirmation link to finish changing your email.`
+          : 'Email address updated.'
       });
     } catch (err) {
-      setProfileStatus({ type: 'error', message: err.message });
+      setEmailStatus({ type: 'error', message: err.message });
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setProfileStatus({ type: 'error', message: 'Please choose an image file (JPG, PNG, GIF or WebP).' });
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      setProfileStatus({ type: 'error', message: 'Image is too large. Choose one under 10 MB.' });
-      return;
-    }
-    try {
-      const avatar = await resizeImageFile(file);
-      onProfileUpdated(await authService.updateAvatar(currentUser.id, avatar));
-      setProfileStatus({ type: 'success', message: 'Profile picture updated.' });
-    } catch (err) {
-      setProfileStatus({ type: 'error', message: err.message });
-    }
-  };
-
-  const handleAvatarRemove = async () => {
-    try {
-      onProfileUpdated(await authService.updateAvatar(currentUser.id, ''));
-      setProfileStatus({ type: 'success', message: 'Profile picture removed.' });
-    } catch (err) {
-      setProfileStatus({ type: 'error', message: err.message });
     }
   };
 
@@ -203,7 +127,7 @@ export default function SettingsModal({
     e.preventDefault();
     setIsSaving(true);
     try {
-      await authService.changePassword(currentUser.id, passwords.current, passwords.next, passwords.confirm);
+      await securityService.changePassword(currentUser, passwords.current, passwords.next, passwords.confirm);
       setPasswords({ current: '', next: '', confirm: '' });
       setPasswordStatus({ type: 'success', message: 'Password updated. Use it the next time you sign in.' });
     } catch (err) {
@@ -303,160 +227,52 @@ export default function SettingsModal({
           <div className="settings-content">
             <h3 className="settings-section-title">{activeSection.label}</h3>
 
-            {section === 'profile' && (
-              <form onSubmit={handleProfileSave} className="settings-stack">
-                <div className="settings-profile-head">
-                  <div className="settings-avatar">
-                    {currentUser?.avatar
-                      ? <img src={currentUser.avatar} alt="Profile picture" />
-                      : (profile.name ? profile.name.charAt(0).toUpperCase() : 'U')}
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis' }}>{original.name}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {original.classification} · {original.email}
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.6rem' }}>
-                      <label className="btn-secondary" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', cursor: 'pointer' }} id="btn-upload-avatar">
-                        <Camera size={14} />
-                        <span>{currentUser?.avatar ? 'Change Photo' : 'Upload Photo'}</span>
-                        <input type="file" accept="image/*" onChange={handleAvatarChange} hidden id="input-avatar-file" />
-                      </label>
-                      {currentUser?.avatar && (
-                        <button type="button" className="btn-secondary" onClick={handleAvatarRemove} id="btn-remove-avatar"
-                          style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', color: 'var(--danger)' }}>
-                          <Trash2 size={14} />
-                          <span>Remove</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="form-row-2">
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="profile-name">Full Name</label>
-                    <input id="profile-name" className="form-input" value={profile.name}
-                      onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="profile-email">Email Address</label>
-                    <input id="profile-email" type="email" className="form-input" value={profile.email}
-                      onChange={(e) => setProfile({ ...profile, email: e.target.value })} />
-                  </div>
-                </div>
-
-                <div className="form-row-2">
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="profile-classification">I am a</label>
-                    <select id="profile-classification" className="form-select" value={profile.classification}
-                      onChange={(e) => {
-                        const next = e.target.value;
-                        setProfile({
-                          ...profile,
-                          classification: next,
-                          institutionType: profile.institution ? profile.institutionType : defaultInstitutionType(next),
-                          department: isValidDepartment(profile.department, profile.institutionType, next) ? profile.department : ''
-                        });
-                      }}>
-                      {CLASSIFICATIONS.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  {profile.classification === 'Other' && (
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="profile-other">Describe your role</label>
-                      <input id="profile-other" className="form-input" value={profile.otherDescription}
-                        onChange={(e) => setProfile({ ...profile, otherDescription: e.target.value })} />
-                    </div>
-                  )}
-                </div>
-
-                <InstitutionFields
-                  key={String(isOpen)}
-                  idPrefix="profile"
-                  classification={profile.classification}
-                  value={profile}
-                  onChange={(next) => setProfile({ ...profile, ...next })}
-                />
-
-                {statusMessage(profileStatus)}
-
-                <div className="settings-actions">
-                  <button type="button" className="btn-secondary" disabled={!profileDirty || isSaving}
-                    onClick={() => { setProfile(original); setProfileStatus({ type: '', message: '' }); }}>
-                    Reset
-                  </button>
-                  <button type="submit" className="btn-primary" disabled={!profileDirty || isSaving} id="btn-save-profile">
-                    <Save size={15} />
-                    <span>{isSaving ? 'Saving…' : 'Save Changes'}</span>
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {section === 'security' && (
-              <form onSubmit={handlePasswordSave} className="settings-stack">
-                <p className="form-hint">
-                  {isCloudEnabled
-                    ? 'Your password is managed securely by your PriorityFirst² cloud account.'
-                    : 'Passwords are stored as salted SHA-256 hashes on this device.'}
-                </p>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="pw-current">Current Password</label>
-                  <input id="pw-current" type="password" className="form-input" autoComplete="current-password"
-                    value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} />
-                </div>
-                <div className="form-row-2">
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="pw-new">New Password</label>
-                    <input id="pw-new" type="password" className="form-input" autoComplete="new-password"
-                      value={passwords.next} onChange={(e) => setPasswords({ ...passwords, next: e.target.value })} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="pw-confirm">Confirm New Password</label>
-                    <input id="pw-confirm" type="password" className="form-input" autoComplete="new-password"
-                      value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })} />
-                  </div>
-                </div>
-
-                <PasswordStrength
-                  password={passwords.next}
-                  confirmPassword={passwords.confirm}
-                  email={currentUser?.email}
-                  name={currentUser?.name}
-                />
-
-                {statusMessage(passwordStatus)}
-
-                <div className="settings-actions">
-                  <button type="submit" className="btn-primary" id="btn-change-password"
-                    disabled={isSaving || !passwords.current || !passwords.next || !passwords.confirm}>
-                    <Lock size={15} />
-                    <span>Update Password</span>
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {section === 'appearance' && (
+            {section === 'general' && (
               <div className="settings-stack">
-                <div className="settings-theme-grid">
-                  {[
-                    { id: 'light', label: 'Light', icon: Sun },
-                    { id: 'dark', label: 'Dark', icon: Moon }
-                  ].map(({ id, label, icon: Icon }) => (
-                    <button
-                      key={id}
-                      type="button"
-                      className={`settings-theme-option ${settings.theme === id ? 'active' : ''}`}
-                      onClick={() => onUpdateSettings({ theme: id })}
-                      aria-pressed={settings.theme === id}
-                    >
-                      <Icon size={22} />
-                      <span>{label}</span>
-                    </button>
-                  ))}
+                <div>
+                  <div className="settings-subtitle">Theme</div>
+                  <div className="settings-theme-grid">
+                    {[
+                      { id: 'light', label: 'Light', icon: Sun },
+                      { id: 'dark', label: 'Dark', icon: Moon }
+                    ].map(({ id, label, icon: Icon }) => (
+                      <button
+                        key={id}
+                        type="button"
+                        className={`settings-theme-option ${settings.theme === id ? 'active' : ''}`}
+                        onClick={() => onUpdateSettings({ theme: id })}
+                        aria-pressed={settings.theme === id}
+                        id={`theme-option-${id}`}
+                      >
+                        <Icon size={22} />
+                        <span>{label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
+
+                <SettingRow
+                  icon={SlidersHorizontal}
+                  title="Daily Workload Limit"
+                  description="How many focused hours you can realistically work per day. Used for scheduling and overload warnings."
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <input
+                      type="number"
+                      min={1}
+                      max={16}
+                      className="form-input"
+                      style={{ width: '80px' }}
+                      value={settings.dailyWorkloadLimitHours}
+                      onChange={(e) => {
+                        const hours = Math.min(16, Math.max(1, Number(e.target.value) || 1));
+                        onUpdateSettings({ dailyWorkloadLimitHours: hours });
+                      }}
+                    />
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>hours</span>
+                  </div>
+                </SettingRow>
+                <p className="form-hint">Priority weights can be tuned on the Prioritizer page.</p>
               </div>
             )}
 
@@ -489,30 +305,72 @@ export default function SettingsModal({
               </div>
             )}
 
-            {section === 'preferences' && (
+            {section === 'security' && (
               <div className="settings-stack">
-                <SettingRow
-                  icon={SlidersHorizontal}
-                  title="Daily Workload Limit"
-                  description="How many focused hours you can realistically work per day. Used for scheduling and overload warnings."
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <input
-                      type="number"
-                      min={1}
-                      max={16}
-                      className="form-input"
-                      style={{ width: '80px' }}
-                      value={settings.dailyWorkloadLimitHours}
-                      onChange={(e) => {
-                        const hours = Math.min(16, Math.max(1, Number(e.target.value) || 1));
-                        onUpdateSettings({ dailyWorkloadLimitHours: hours });
-                      }}
-                    />
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>hours</span>
+                {/* Email address */}
+                <form onSubmit={handleEmailSave} className="settings-stack">
+                  <div className="settings-subtitle">Email address</div>
+                  <div className="profile-readonly">
+                    <Mail size={15} />
+                    <span>{currentUser?.email}</span>
                   </div>
-                </SettingRow>
-                <p className="form-hint">Priority weights can be tuned on the Prioritizer page.</p>
+                  {currentUser?.pendingEmail && currentUser.pendingEmail !== currentUser.email && (
+                    <p className="form-hint">Waiting for confirmation: {currentUser.pendingEmail}</p>
+                  )}
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="new-email">New email address</label>
+                    <input id="new-email" type="email" className="form-input" maxLength={254} autoComplete="email"
+                      placeholder="you@example.com" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
+                  </div>
+                  {statusMessage(emailStatus)}
+                  <div className="settings-actions">
+                    <button type="submit" className="btn-secondary" id="btn-change-email" disabled={isSaving || !newEmail.trim()}>
+                      <Mail size={15} />
+                      <span>Change Email</span>
+                    </button>
+                  </div>
+                </form>
+
+                <div className="settings-divider" />
+
+                {/* Password */}
+                <form onSubmit={handlePasswordSave} className="settings-stack">
+                  <div className="settings-subtitle">Password</div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="pw-current">Current Password</label>
+                    <input id="pw-current" type="password" className="form-input" autoComplete="current-password"
+                      value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} />
+                  </div>
+                  <div className="form-row-2">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="pw-new">New Password</label>
+                      <input id="pw-new" type="password" className="form-input" autoComplete="new-password"
+                        value={passwords.next} onChange={(e) => setPasswords({ ...passwords, next: e.target.value })} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="pw-confirm">Confirm New Password</label>
+                      <input id="pw-confirm" type="password" className="form-input" autoComplete="new-password"
+                        value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <PasswordStrength
+                    password={passwords.next}
+                    confirmPassword={passwords.confirm}
+                    email={currentUser?.email}
+                    name={currentUser?.name}
+                  />
+
+                  {statusMessage(passwordStatus)}
+
+                  <div className="settings-actions">
+                    <button type="submit" className="btn-primary" id="btn-change-password"
+                      disabled={isSaving || !passwords.current || !passwords.next || !passwords.confirm}>
+                      <Lock size={15} />
+                      <span>Update Password</span>
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
 

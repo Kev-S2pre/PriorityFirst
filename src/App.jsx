@@ -7,6 +7,7 @@ import ScheduleCalendar from './components/ScheduleCalendar';
 import AnalyticsView from './components/AnalyticsView';
 import TaskModal from './components/TaskModal';
 import SettingsModal from './components/SettingsModal';
+import ProfilePanel from './components/ProfilePanel';
 import AuthView from './components/AuthView';
 import ConfirmModal from './components/ConfirmModal';
 
@@ -45,8 +46,22 @@ export default function App() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [newTaskDate, setNewTaskDate] = useState(null);
+  // Profile (identity) and Settings (preferences, security, data) are separate panels;
+  // opening one always closes the other
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [settingsSection, setSettingsSection] = useState('profile');
+  const [settingsSection, setSettingsSection] = useState('general');
+
+  const openProfile = () => {
+    setIsSettingsModalOpen(false);
+    setIsProfileOpen(true);
+  };
+
+  const openSettings = (section = 'general') => {
+    setIsProfileOpen(false);
+    setSettingsSection(section);
+    setIsSettingsModalOpen(true);
+  };
 
   // Reusable confirmation modal state
   const [confirmDialog, setConfirmDialog] = useState({
@@ -393,10 +408,8 @@ export default function App() {
       <Navbar 
         activeTab={activeTab}
         setActiveTab={(tab) => handleNavigateWithFilter(tab, 'all')}
-        onOpenSettings={(section = 'profile') => {
-          setSettingsSection(section);
-          setIsSettingsModalOpen(true);
-        }}
+        onOpenProfile={openProfile}
+        onOpenSettings={openSettings}
         notifications={notifications}
         theme={settings.theme}
         onToggleTheme={handleToggleTheme}
@@ -480,15 +493,27 @@ export default function App() {
         initialDate={newTaskDate}
       />
 
-      {/* Settings, Backups & LocalStorage Modal */}
-      <SettingsModal 
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        initialSection={settingsSection}
+      {/* My Profile: identity only */}
+      <ProfilePanel
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
         currentUser={currentUser}
         onProfileUpdated={(user) => {
           setCurrentUser(user);
           showToast('Profile updated', 'success');
+        }}
+        onOpenSecurity={() => openSettings('security')}
+      />
+
+      {/* Settings: preferences, notifications, security, data */}
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        initialSection={settingsSection}
+        currentUser={currentUser}
+        onAccountUpdated={(user) => {
+          setCurrentUser(user);
+          showToast('Account updated', 'success');
         }}
         onExportBackup={handleExportBackup}
         onImportBackup={handleImportBackup}

@@ -23,6 +23,7 @@ import ConfirmModal from './ConfirmModal.jsx';
 export default function Navbar({
   activeTab,
   setActiveTab,
+  onOpenProfile,
   onOpenSettings,
   notifications,
   theme,
@@ -228,7 +229,7 @@ export default function Navbar({
           {currentUser && (
             <button
               className="icon-btn"
-              onClick={() => onOpenSettings('profile')}
+              onClick={() => onOpenSettings('general')}
               title="Settings"
               id="btn-settings-toggle"
               aria-label="Open settings"
@@ -243,8 +244,8 @@ export default function Navbar({
               <button
                 type="button"
                 className="navbar-profile-btn"
-                onClick={() => onOpenSettings('profile')}
-                aria-label="Edit your profile"
+                onClick={onOpenProfile}
+                aria-label="Open my profile"
                 id="btn-open-profile"
                 style={{
                   display: 'flex',
@@ -257,7 +258,7 @@ export default function Navbar({
                   fontSize: '0.8rem',
                   fontWeight: 600
                 }}
-                title={`Edit profile · ${currentUser.name} (${currentUser.email})`}
+                title={`My Profile · ${currentUser.name} (${currentUser.email})`}
               >
                 <div
                   className="navbar-avatar"

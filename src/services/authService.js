@@ -76,6 +76,7 @@ function profileToSessionUser(authUser, profile) {
     otherDescription: profile?.other_description || '',
     avatar: profile?.avatar || '',
     pendingEmail: authUser.new_email || '',
+    createdAt: authUser.created_at || '',
     loginTimestamp: new Date().toISOString()
   };
 }
@@ -353,6 +354,7 @@ export const authService = {
       classification: userRecord.classification || userRecord.role || 'Student',
       otherDescription: userRecord.otherDescription || '',
       avatar: userRecord.avatar || '',
+      createdAt: userRecord.createdAt || '',
       loginTimestamp: new Date().toISOString()
     };
 
