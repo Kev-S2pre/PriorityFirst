@@ -1709,6 +1709,34 @@ html, body, #root { max-width: 100%; overflow-x: hidden; }
 .password-rules li.passed svg { color: var(--success); }
 .password-rules li.warning { color: var(--danger); }
 
+/* Sign-in / Register card */
+.auth-card { max-width: 500px; transition: none; }
+.auth-card-wide { max-width: 860px; }
+.auth-brand { padding: 2rem 2rem 1.25rem; }
+.auth-card-wide .auth-brand { padding: 1rem 2rem 0.85rem; }
+/* While registering, keep only the name in the header so the form fits on one screen */
+.auth-card-wide .auth-brand > div:first-child,
+.auth-card-wide .auth-brand > p { display: none !important; }
+.auth-card-wide .auth-brand h1 { font-size: 1.3rem !important; margin-bottom: 0 !important; }
+.auth-card-wide .register-grid .form-input,
+.auth-card-wide .register-grid .form-select { padding-top: 0.55rem; padding-bottom: 0.55rem; }
+
+/* Register fields in two columns on wider screens */
+.register-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem 1.1rem;
+  align-items: start;
+}
+@media (min-width: 760px) {
+  .register-grid { grid-template-columns: 1fr 1fr; }
+  .register-grid > .form-row-2,
+  .register-grid > .password-strength,
+  .register-grid > .register-full,
+  .register-grid > button[type="submit"],
+  .register-grid > :last-child { grid-column: 1 / -1; }
+}
+
 /* Terms agreement checkbox */
 .terms-check {
   display: flex;

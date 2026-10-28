@@ -212,11 +212,10 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
 
   return (
     <div className="auth-container" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem 1rem' }}>
-      <div 
-        className="glass-card" 
-        style={{ 
-          maxWidth: '500px', 
-          width: '100%', 
+      <div
+        className={`glass-card auth-card ${mode === 'register' ? 'auth-card-wide' : ''}`}
+        style={{
+          width: '100%',
           borderRadius: '16px', 
           overflow: 'hidden',
           boxShadow: 'var(--shadow-modal)',
@@ -224,7 +223,7 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
         }}
       >
         {/* Brand Header */}
-        <div style={{ padding: '2rem 2rem 1.25rem', textAlign: 'center', background: 'rgba(0,0,0,0.15)', borderBottom: '1px solid var(--border-subtle)' }}>
+        <div className="auth-brand" style={{ textAlign: 'center', background: 'rgba(0,0,0,0.15)', borderBottom: '1px solid var(--border-subtle)' }}>
           <div style={{ width: '44px', height: '44px', margin: '0 auto 0.75rem', borderRadius: '10px', background: 'var(--primary-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: 'var(--brand-glow)' }}>
             <CheckCircle2 size={24} strokeWidth={2.5} />
           </div>
@@ -461,7 +460,7 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
 
           {/* REGISTRATION FORM */}
           {mode === 'register' && (
-            <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form onSubmit={handleRegisterSubmit} className="register-grid">
               <div className="form-group">
                 <label className="form-label" htmlFor="reg-name">
                   Full Name <span style={{ color: 'var(--danger)' }}>*</span>
@@ -606,7 +605,7 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
                 name={regName}
               />
 
-              <div className="form-group">
+              <div className="form-group register-full">
                 <label className="terms-check" htmlFor="reg-accept-terms">
                   <input
                     id="reg-accept-terms"

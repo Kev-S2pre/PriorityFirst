@@ -121,11 +121,7 @@ export default function Navbar({
               <span>Analytics</span>
             </button>
           </nav>
-        ) : (
-          <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-            Academic Session Authentication
-          </div>
-        )}
+        ) : null}
 
         {/* Action Buttons */}
         <div className="navbar-actions">
