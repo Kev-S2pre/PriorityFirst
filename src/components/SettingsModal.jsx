@@ -377,11 +377,6 @@ export default function SettingsModal({
                   value={profile}
                   onChange={(next) => setProfile({ ...profile, ...next })}
                 />
-                {original.institution && !original.institutionId && profile.institution === original.institution && (
-                  <span className="form-hint" style={{ color: 'var(--warning)' }}>
-                    “{original.institution}” isn't verified. Search and pick your institution above, or set the type to None.
-                  </span>
-                )}
 
                 {statusMessage(profileStatus)}
 
