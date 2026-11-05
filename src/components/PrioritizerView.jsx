@@ -15,7 +15,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { PRESET_WEIGHTS } from '../services/prioritizationEngine';
-import { categoryClassName, taskTimeSummary } from '../data/taskOptions.js';
+import { categoryClassName, categoryLabel, taskTimeSummary } from '../data/taskOptions.js';
 
 export default function PrioritizerView({
   rankedTasks,
@@ -61,7 +61,7 @@ export default function PrioritizerView({
           <span>PriorityFirst² Transparent Prioritization Engine</span>
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-          Multi-criteria decision analysis recommending the optimal order to tackle coursework, laboratory activities, and projects.
+          Multi-criteria decision analysis recommending the best order to tackle work, studies, personal responsibilities, and everything else on your list.
         </p>
       </div>
 
@@ -131,7 +131,7 @@ export default function PrioritizerView({
           {/* Importance */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', marginBottom: '0.35rem' }}>
-              <span style={{ fontWeight: 600, color: 'var(--primary)' }}>Academic Importance</span>
+              <span style={{ fontWeight: 600, color: 'var(--primary)' }}>Importance</span>
               <span style={{ fontFamily: 'var(--font-mono)' }}>{pctImportance}%</span>
             </div>
             <input 
@@ -189,7 +189,7 @@ export default function PrioritizerView({
             <ul style={{ paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               <li><strong>Urgency ($S_u$):</strong> Proximity to due date and time. Overdue tasks are clamped to 100 to prevent missed responsibilities.</li>
               <li><strong>Workload Pressure ($S_w$):</strong> Evaluates task duration relative to the available time window before deadline ($E / H$).</li>
-              <li><strong>Academic Importance ($S_i$):</strong> Discrete grade/strategic weight (Critical = 100, High = 75, Medium = 50, Low = 25).</li>
+              <li><strong>Importance ($S_i$):</strong> How much the outcome matters to you (Critical = 100, High = 75, Medium = 50, Low = 25).</li>
               <li><strong>Cognitive Difficulty ($S_d$):</strong> Rating from 1 (Very Easy) to 5 (Very Challenging), requiring fresh focus and early starts.</li>
             </ul>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '0.4rem' }}>
@@ -220,7 +220,7 @@ export default function PrioritizerView({
             No Active Tasks to Prioritize!
           </h3>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-            All tasks are currently completed. Add new coursework or uncheck completed tasks to regenerate rankings.
+            All tasks are currently completed. Add new tasks or uncheck completed tasks to regenerate rankings.
           </p>
         </div>
       ) : (
@@ -258,7 +258,7 @@ export default function PrioritizerView({
                       </span>
 
                       <span className={`category-badge ${categoryClassName(task.category)} `}>
-                        {task.category}
+                        {categoryLabel(task.category)}
                       </span>
 
                       <span className={`priority-score-badge ${p.priorityLevel ? p.priorityLevel.toLowerCase() : ''}`}>
@@ -393,7 +393,7 @@ export default function PrioritizerView({
                   <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />
                   <span style={{ textDecoration: 'line-through' }}>{task.title}</span>
                   <span className={`category-badge ${categoryClassName(task.category)} `}>
-                    {task.category}
+                    {categoryLabel(task.category)}
                   </span>
                 </div>
                 <button 

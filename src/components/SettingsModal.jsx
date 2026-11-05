@@ -427,7 +427,7 @@ export default function SettingsModal({
                     <span>Danger Zone</span>
                   </div>
                   <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    <button className="btn-secondary" onClick={onResetSampleData} title="Load the engineering coursework sample dataset">
+                    <button className="btn-secondary" onClick={onResetSampleData} title="Load a general sample task set">
                       <RefreshCw size={15} />
                       <span>Load Sample Tasks</span>
                     </button>

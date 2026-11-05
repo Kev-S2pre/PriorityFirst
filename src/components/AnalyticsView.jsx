@@ -6,13 +6,9 @@ import {
   TrendingUp, 
   AlertTriangle, 
   Layers, 
-  Award,
-  BookOpen,
-  FolderGit2,
-  Activity,
-  Calculator,
-  FileText
+  Award
 } from 'lucide-react';
+import { CATEGORY_ICONS } from '../data/categoryIcons.js';
 import { calculateTimeRemaining } from '../services/prioritizationEngine';
 import { TASK_CATEGORIES } from '../data/taskOptions.js';
 
@@ -38,11 +34,7 @@ export default function AnalyticsView({ tasks }) {
   const onTimeScore = totalCount > 0 ? Math.max(0, Math.round(((totalCount - overdueCount) / totalCount) * 100)) : 100;
 
   // Category Breakdown Analysis
-  const categoryIcons = {
-    assignment: BookOpen, project: FolderGit2, 'laboratory activity': Activity,
-    calculation: Calculator, report: FileText, 'personal responsibility': Layers
-  };
-  const categories = TASK_CATEGORIES.map(({ value, label }) => ({ key: value, label, icon: categoryIcons[value] || Layers }));
+  const categories = TASK_CATEGORIES.map(({ value, label }) => ({ key: value, label, icon: CATEGORY_ICONS[value] || Layers }));
 
   const categoryData = categories.map(cat => {
     const catTasks = tasks.filter(t => t.category === cat.key);
@@ -97,7 +89,7 @@ export default function AnalyticsView({ tasks }) {
           <span className="stat-subtext">{completedTasks.length} of {totalCount} tasks completed</span>
         </div>
 
-        {/* Study Hours Completed */}
+        {/* Hours Completed */}
         <div className="stat-card in_progress">
           <div className="stat-header">
             <span className="stat-label">Invested Workload</span>
@@ -175,7 +167,7 @@ export default function AnalyticsView({ tasks }) {
           </div>
         </div>
 
-        {/* Right Column: Cognitive Difficulty Distribution & Study Insights */}
+        {/* Right Column: Cognitive Difficulty Distribution & Insights */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Difficulty Breakdown */}
           <div className="glass-card">
@@ -222,15 +214,15 @@ export default function AnalyticsView({ tasks }) {
             </div>
           </div>
 
-          {/* Academic Engineering Insights Card */}
+          {/* Time Management Insights Card */}
           <div className="glass-card" style={{ borderLeft: '4px solid var(--primary)' }}>
             <div className="card-body">
               <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <TrendingUp size={16} style={{ color: 'var(--primary)' }} />
-                <span>Time Management & Critical Thinking Insights</span>
+                <span>Time Management Insights</span>
               </h3>
               <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Based on engineering student productivity research, high-difficulty calculations and laboratory reports require 25-40% more revision time than initially estimated. Prioritizing Level 4 & 5 tasks at least 48 hours prior to submission significantly reduces critical submission errors.
+                Difficult tasks usually take longer than planned, so start Level 4 and 5 tasks at least two days before they are due. Keep daily workload under 8 hours and schedule rest, exercise and social time like any other task. A plan you can sustain beats one you abandon.
               </p>
             </div>
           </div>

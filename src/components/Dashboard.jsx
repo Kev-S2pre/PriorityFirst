@@ -10,15 +10,11 @@ import {
   Plus, 
   Layers,
   Flame,
-  CheckCircle,
-  FileText,
-  Activity,
-  Calculator,
-  FolderGit2,
-  BookOpen
+  CheckCircle
 } from 'lucide-react';
+import { CATEGORY_ICONS, CATEGORY_COLORS } from '../data/categoryIcons.js';
 import { calculateTimeRemaining } from '../services/prioritizationEngine';
-import { TASK_CATEGORIES, categoryClassName, taskTimeSummary, calendarDaysUntil } from '../data/taskOptions.js';
+import { TASK_CATEGORIES, categoryClassName, categoryLabel, taskTimeSummary, calendarDaysUntil } from '../data/taskOptions.js';
 
 export default function Dashboard({
   tasks,
@@ -67,21 +63,13 @@ export default function Dashboard({
     .slice(0, 4);
 
   // Workload by Category
-  const categoryIconMap = {
-    'assignment': { count: 0, hours: 0, label: 'Assignment', icon: BookOpen },
-    'project': { count: 0, hours: 0, label: 'Project', icon: FolderGit2 },
-    'laboratory activity': { count: 0, hours: 0, label: 'Lab Activity', icon: Activity },
-    'calculation': { count: 0, hours: 0, label: 'Calculation', icon: Calculator },
-    'report': { count: 0, hours: 0, label: 'Report', icon: FileText },
-    'personal responsibility': { count: 0, hours: 0, label: 'Personal', icon: Layers }
-  };
   const categoryStats = Object.fromEntries(TASK_CATEGORIES.map(({ value, label }) => [
     value,
-    { count: 0, hours: 0, label, icon: categoryIconMap[value]?.icon || Layers }
+    { count: 0, hours: 0, label, icon: CATEGORY_ICONS[value] || Layers }
   ]));
 
   activeTasks.forEach(t => {
-    const cat = t.category || 'assignment';
+    const cat = t.category;
     if (categoryStats[cat]) {
       categoryStats[cat].count += 1;
       categoryStats[cat].hours += (Number(t.estimatedHours) || 0);
@@ -308,7 +296,7 @@ export default function Dashboard({
                   No Pending Priorities!
                 </h3>
                 <p style={{ fontSize: '0.875rem' }}>
-                  All tasks are completed or no tasks exist yet. Create new coursework items to generate recommendations.
+                  All tasks are completed or no tasks exist yet. Add a task to generate recommendations.
                 </p>
                 <button 
                   className="btn-primary" 
@@ -333,7 +321,7 @@ export default function Dashboard({
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <span className="rank-badge">#{task.rank} Priority</span>
                           <span className={`category-badge ${categoryClassName(task.category)} `}>
-                            {task.category}
+                            {categoryLabel(task.category)}
                           </span>
                         </div>
 
@@ -368,7 +356,7 @@ export default function Dashboard({
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.2rem' }}>
                           <span>Why this task is #{task.rank}:</span>
                         </div>
-                        <p>{p.explanation || 'Analyzed based on deadline proximity and academic importance.'}</p>
+                        <p>{p.explanation || 'Analyzed based on deadline proximity and importance.'}</p>
                       </div>
 
                       {/* Meta Details Row */}
@@ -458,7 +446,7 @@ export default function Dashboard({
                             {t.title}
                           </div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', gap: '0.5rem', marginTop: '2px' }}>
-                            <span>{TASK_CATEGORIES.find(c => c.value === t.category)?.label || t.category}</span>
+                            <span>{categoryLabel(t.category)}</span>
                             <span>•</span>
                             <span>{taskTimeSummary(t).range || taskTimeSummary(t).duration}</span>
                           </div>
@@ -486,7 +474,7 @@ export default function Dashboard({
             </div>
           </div>
 
-          {/* Coursework Category Distribution */}
+          {/* Category Distribution */}
           <div className="glass-card">
             <div className="card-header">
               <div className="card-title">
@@ -518,10 +506,7 @@ export default function Dashboard({
                           className="priority-bar-fill"
                           style={{ 
                             width: `${percent}%`, 
-                            background: key === 'calculation' ? 'var(--warning)' : 
-                                        key === 'project' ? 'var(--accent-purple, #a855f7)' : 
-                                        key === 'laboratory activity' ? 'var(--success)' : 
-                                        'var(--primary)' 
+                            background: CATEGORY_COLORS[key] || 'var(--primary)'
                           }}
                         />
                       </div>

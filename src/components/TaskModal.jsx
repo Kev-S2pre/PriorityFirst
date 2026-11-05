@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, AlertCircle, Clock, Calendar, Trash2 } from 'lucide-react';
-import { TASK_CATEGORIES, durationFromTimes, formatDuration, formatTime } from '../data/taskOptions.js';
+import { TASK_CATEGORIES, DEFAULT_CATEGORY, normalizeCategory, durationFromTimes, formatDuration, formatTime } from '../data/taskOptions.js';
 import ConfirmModal from './ConfirmModal.jsx';
 import { validateTaskTitle, validateLongText, LIMITS } from '../services/validation.js';
 
@@ -14,7 +14,7 @@ export default function TaskModal({
 }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('assignment');
+  const [category, setCategory] = useState(DEFAULT_CATEGORY);
   const [deadlineDate, setDeadlineDate] = useState('');
   const [deadlineTime, setDeadlineTime] = useState('23:59');
   const [difficulty, setDifficulty] = useState(3);
@@ -38,7 +38,7 @@ export default function TaskModal({
       initialValues = {
         title: taskToEdit.title || '',
         description: taskToEdit.description || '',
-        category: taskToEdit.category || 'assignment',
+        category: normalizeCategory(taskToEdit.category),
         deadlineDate: taskToEdit.deadlineDate || '',
         deadlineTime: taskToEdit.deadlineTime || '23:59',
         difficulty: Number(taskToEdit.difficulty) || 3,
@@ -66,7 +66,7 @@ export default function TaskModal({
       initialValues = {
         title: '',
         description: '',
-        category: 'assignment',
+        category: DEFAULT_CATEGORY,
         deadlineDate: defaultDate,
         deadlineTime: '23:59',
         difficulty: 3,

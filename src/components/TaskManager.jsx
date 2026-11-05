@@ -18,7 +18,7 @@ import {
   List
 } from 'lucide-react';
 import { calculateTimeRemaining } from '../services/prioritizationEngine';
-import { TASK_CATEGORIES, categoryClassName, taskTimeSummary, calendarDaysUntil } from '../data/taskOptions.js';
+import { TASK_CATEGORIES, categoryClassName, categoryLabel, taskTimeSummary, calendarDaysUntil } from '../data/taskOptions.js';
 
 export default function TaskManager({
   tasks,
@@ -358,7 +358,7 @@ export default function TaskManager({
           <p style={{ color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto 1.5rem', fontSize: '0.9rem' }}>
             {hasActiveFilters 
               ? 'No tasks match your active search terms or selected filters. Try clearing filters to see your full schedule.'
-              : 'You have not added any tasks yet. Create your first engineering or coursework task to get started.'}
+              : 'You have not added any tasks yet. Create your first task to get started.'}
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem' }}>
             {hasActiveFilters && (
@@ -402,7 +402,7 @@ export default function TaskManager({
                     <div className="task-title-group">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
                         <span className={`category-badge ${categoryClassName(task.category)}`}>
-                          {task.category}
+                          {categoryLabel(task.category)}
                         </span>
 
                         {!isCompleted && p.score !== undefined && (
@@ -584,7 +584,7 @@ export default function TaskManager({
                       </td>
                       <td style={{ padding: '0.75rem 1rem' }}>
                         <span className={`category-badge ${categoryClassName(task.category)} `}>
-                          {task.category}
+                          {categoryLabel(task.category)}
                         </span>
                       </td>
                       <td style={{ padding: '0.75rem 1rem', color: task.isOverdue && !isCompleted ? 'var(--danger)' : 'inherit', fontWeight: task.isOverdue && !isCompleted ? 700 : 400 }}>
@@ -635,7 +635,7 @@ export default function TaskManager({
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span className={`category-badge ${categoryClassName(selectedTaskForDetails.category)} `}>
-                  {selectedTaskForDetails.category}
+                  {categoryLabel(selectedTaskForDetails.category)}
                 </span>
                 <h3 className="modal-title" style={{ fontSize: '1.1rem' }}>
                   Task Details & Analysis
@@ -700,7 +700,7 @@ export default function TaskManager({
 
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--text-secondary)' }}>Importance (Academic Impact)</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>Importance</span>
                       <span style={{ fontFamily: 'var(--font-mono)' }}>{selectedTaskForDetails.priority?.importanceScore || 0}/100</span>
                     </div>
                     <div className="priority-bar-meter">

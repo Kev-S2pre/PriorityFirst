@@ -12,7 +12,7 @@ import {
   Edit3
 } from 'lucide-react';
 import { calculateTimeRemaining } from '../services/prioritizationEngine.js';
-import { categoryClassName, taskTimeSummary } from '../data/taskOptions.js';
+import { categoryClassName, categoryLabel, taskTimeSummary } from '../data/taskOptions.js';
 
 // Calculate exact Day of Year (1 - 366)
 function getDayOfYear(d) {
@@ -652,7 +652,7 @@ export default function ScheduleCalendar({
                 No tasks due on this date.
               </p>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '380px', margin: '0 auto 16px' }}>
-                You have no scheduled coursework or laboratory deadlines on this day.
+                You have no scheduled tasks or deadlines on this day.
               </p>
               {!selectedDayInfo.isPast && (
                 <button
@@ -704,7 +704,7 @@ export default function ScheduleCalendar({
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '3px' }}>
                           <span className={`category-badge ${categoryClassName(task.category)}`} style={{ fontSize: '11px', padding: '1px 6px' }}>
-                            {task.category}
+                            {categoryLabel(task.category)}
                           </span>
                           <span style={{ fontSize: '11px', fontWeight: 700, color: task.importance === 'Critical' ? 'var(--danger)' : 'var(--text-secondary)' }}>
                             {task.importance}

@@ -382,15 +382,15 @@ export default function App() {
   const handleResetSampleData = () => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Load Engineering Sample Tasks?',
-      message: 'Reset current tasks and load the standard Engineering Student sample dataset? Any unsaved custom tasks might be overwritten or supplemented.',
+      title: 'Load Sample Tasks?',
+      message: 'Reset current tasks and load a sample set covering work, studies, home, health, and social life? Any unsaved custom tasks might be overwritten or supplemented.',
       confirmText: 'Load Samples',
       cancelText: 'Cancel',
       confirmVariant: 'primary',
       onConfirm: () => {
         const samples = storageService.loadSampleData(currentUser?.id);
         setTasks(samples);
-        showToast('Restored engineering coursework sample tasks', 'success');
+        showToast('Loaded sample tasks', 'success');
         setConfirmDialog(prev => ({ ...prev, isOpen: false }));
       }
     });
@@ -429,7 +429,7 @@ export default function App() {
             onRecoveryDone={() => setIsPasswordRecovery(false)}
           />
         ) : (
-          /* Protected Academic Features */
+          /* Protected App Features */
           <>
             {activeTab === 'dashboard' && (
               <Dashboard 

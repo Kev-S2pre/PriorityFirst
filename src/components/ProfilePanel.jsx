@@ -13,7 +13,7 @@ function profileFromUser(user) {
     institutionId: user?.institutionId || '',
     institutionType: user?.institutionType || defaultInstitutionType(user?.classification || user?.role),
     department: user?.department || '',
-    classification: user?.classification || user?.role || 'Student',
+    classification: user?.classification || user?.role || 'Other',
     otherDescription: user?.otherDescription || ''
   };
 }

@@ -1,22 +1,40 @@
 export const TASK_CATEGORIES = [
-  { value: 'assignment', label: 'Assignment' },
-  { value: 'project', label: 'Project' },
-  { value: 'laboratory activity', label: 'Laboratory Activity' },
-  { value: 'calculation', label: 'Calculation' },
-  { value: 'report', label: 'Report' },
-  { value: 'personal responsibility', label: 'Personal Responsibility' },
-  { value: 'school / studies', label: 'School / Studies' },
   { value: 'work / professional', label: 'Work / Professional' },
-  { value: 'responsibilities', label: 'Responsibilities' },
-  { value: 'games / gaming', label: 'Games / Gaming' },
-  { value: 'hangouts / social activities', label: 'Hangouts / Social Activities' },
-  { value: 'training / exercise', label: 'Training / Exercise' },
+  { value: 'school / studies', label: 'School / Studies' },
+  { value: 'project', label: 'Project' },
+  { value: 'responsibilities', label: 'Personal & Home' },
+  { value: 'errands', label: 'Errands / Appointments' },
+  { value: 'training / exercise', label: 'Health & Fitness' },
+  { value: 'hangouts / social activities', label: 'Social / Family' },
+  { value: 'games / gaming', label: 'Hobbies & Gaming' },
   { value: 'rest / personal time', label: 'Rest / Personal Time' },
-  { value: 'other activities', label: 'Other Activities' }
+  { value: 'other activities', label: 'Other' }
 ];
 
+export const DEFAULT_CATEGORY = 'other activities';
+
+// Categories from the original student-only version map onto the general ones
+const LEGACY_CATEGORIES = {
+  assignment: 'school / studies',
+  'laboratory activity': 'school / studies',
+  calculation: 'school / studies',
+  report: 'school / studies',
+  'personal responsibility': 'responsibilities'
+};
+
+export function normalizeCategory(category) {
+  const value = String(category || '').toLowerCase();
+  if (TASK_CATEGORIES.some(option => option.value === value)) return value;
+  return LEGACY_CATEGORIES[value] || DEFAULT_CATEGORY;
+}
+
+export function categoryLabel(category) {
+  const value = normalizeCategory(category);
+  return TASK_CATEGORIES.find(option => option.value === value)?.label || value;
+}
+
 export function categoryClassName(category) {
-  return `category-${String(category || 'assignment').toLowerCase().split(/[ /]/)[0]}`;
+  return `category-${normalizeCategory(category).split(/[ /]/)[0]}`;
 }
 
 function minutesFromTime(value) {

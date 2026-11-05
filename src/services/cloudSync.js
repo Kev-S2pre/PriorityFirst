@@ -4,6 +4,7 @@
  * localStorage stays the fast local copy; this module mirrors changes to the cloud.
  */
 import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { normalizeCategory } from '../data/taskOptions.js';
 
 export const isCloudEnabled = isSupabaseConfigured;
 
@@ -54,7 +55,7 @@ function rowToTask(row) {
     id: row.id,
     title: row.title,
     description: row.description || '',
-    category: row.category,
+    category: normalizeCategory(row.category),
     deadlineDate: row.deadline_date,
     deadlineTime: trimTime(row.deadline_time) || '23:59',
     difficulty: row.difficulty,

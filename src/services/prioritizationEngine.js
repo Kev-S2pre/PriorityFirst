@@ -7,8 +7,8 @@ import { DEFAULT_WEIGHTS } from './storageService.js';
 
 export const PRESET_WEIGHTS = {
   balanced: {
-    name: 'Balanced Engineering Student',
-    description: 'Equally balances urgency, academic importance, workload pressure, and difficulty.',
+    name: 'Balanced',
+    description: 'Balances urgency, importance, workload pressure, and difficulty for everyday planning.',
     weights: { urgency: 0.40, importance: 0.25, workload: 0.20, difficulty: 0.15 }
   },
   urgent: {
@@ -18,12 +18,12 @@ export const PRESET_WEIGHTS = {
   },
   deep_work: {
     name: 'Cognitive / Deep Work First',
-    description: 'Prioritizes challenging, high-difficulty projects and complex calculations early.',
+    description: 'Gives challenging, high-focus work equal weight so it gets started early.',
     weights: { urgency: 0.25, importance: 0.25, workload: 0.25, difficulty: 0.25 }
   },
   quick_wins: {
     name: 'Momentum / Quick Wins',
-    description: 'Surfaces manageable tasks with shorter durations to build study momentum.',
+    description: 'Surfaces manageable tasks with shorter durations to build momentum.',
     weights: { urgency: 0.35, importance: 0.35, workload: 0.10, difficulty: 0.20 }
   }
 };
@@ -158,21 +158,21 @@ export function calculateTaskPriority(task, customWeights = DEFAULT_WEIGHTS) {
   if (isOverdue) {
     const overdueHrs = Math.abs(Math.round(diffHours));
     reasons.push(`Overdue by ${overdueHrs > 24 ? Math.round(overdueHrs / 24) + 'd' : overdueHrs + 'h'}`);
-    explanationBullets.push(`Overdue deadline requires immediate intervention to mitigate grade penalties.`);
+    explanationBullets.push(`Overdue deadline needs immediate attention to limit the impact of missing it.`);
   } else if (diffHours <= 12) {
     reasons.push(`Due in ${Math.round(diffHours)} hours`);
     explanationBullets.push(`Deadline is imminent (${Math.round(diffHours)}h remaining), giving this task urgent precedence.`);
   } else if (isDueToday) {
     reasons.push('Due today');
-    explanationBullets.push(`Due today before midnight; needs to be completed during today's study blocks.`);
+    explanationBullets.push(`Due today before midnight; needs a slot in today's plan.`);
   } else if (diffHours <= 48) {
     reasons.push('Due within 48h');
     explanationBullets.push(`Due within 2 days; early initiation prevents crunch.`);
   }
 
   if (task.importance === 'Critical') {
-    reasons.push('Critical academic weight');
-    explanationBullets.push(`Carries maximum strategic weight ('Critical') on course performance.`);
+    reasons.push('Critical importance');
+    explanationBullets.push(`Marked 'Critical', so the outcome carries the most weight.`);
   } else if (task.importance === 'High') {
     reasons.push('High importance');
   }
@@ -184,7 +184,7 @@ export function calculateTaskPriority(task, customWeights = DEFAULT_WEIGHTS) {
 
   if (difficulty >= 4) {
     reasons.push(`High difficulty (Level ${difficulty}/5)`);
-    explanationBullets.push(`High complexity (Level ${difficulty}) demands fresh cognitive focus and potential instructor check-in.`);
+    explanationBullets.push(`High complexity (Level ${difficulty}) demands fresh focus and may need help or extra preparation.`);
   }
 
   // Fallback reason if list is sparse

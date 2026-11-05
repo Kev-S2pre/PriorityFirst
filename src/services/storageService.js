@@ -1,5 +1,5 @@
 import { generateSampleTasks } from '../data/sampleTasks.js';
-import { durationFromTimes } from '../data/taskOptions.js';
+import { durationFromTimes, normalizeCategory } from '../data/taskOptions.js';
 
 const TASKS_KEY = 'priorityfirst_tasks_v1';
 const INITIALIZED_KEY = 'priorityfirst_initialized_v1';
@@ -51,7 +51,7 @@ function sanitizeTask(task) {
     id: task.id || `task-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     title: (task.title || 'Untitled Task').trim(),
     description: (task.description || '').trim(),
-    category: task.category || 'assignment',
+    category: normalizeCategory(task.category),
     deadlineDate: task.deadlineDate || new Date().toISOString().split('T')[0],
     deadlineTime: task.deadlineTime || '23:59',
     difficulty: Math.max(1, Math.min(5, Number(task.difficulty) || 3)),

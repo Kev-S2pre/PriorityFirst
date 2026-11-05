@@ -49,7 +49,7 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
   const [regInstitution, setRegInstitution] = useState('');
   const [regInstitutionId, setRegInstitutionId] = useState('');
   const [regInstitutionType, setRegInstitutionType] = useState('school');
-  const [regClassification, setRegClassification] = useState('Student');
+  const [regClassification, setRegClassification] = useState('Other');
   const [regOtherDescription, setRegOtherDescription] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -196,7 +196,7 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
       setRegInstitution('');
       setRegInstitutionId('');
       setRegInstitutionType('school');
-      setRegClassification('Student');
+      setRegClassification('Other');
       setRegAcceptedTerms(false);
       setRegOtherDescription('');
       setFieldErrors({});
@@ -281,14 +281,14 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
               {/* Email Field */}
               <div className="form-group">
                 <label className="form-label" htmlFor="login-email">
-                  Academic Email Address
+                  Email Address
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input 
                     id="login-email"
                     type="email"
                     className="form-input"
-                    placeholder="student@priorityfirst.edu"
+                    placeholder="you@example.com"
                     value={loginEmail}
                     maxLength={254}
                     onChange={(e) => setLoginEmail(e.target.value)}
@@ -517,7 +517,7 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
                   <option value="Professional">Professional</option>
                   <option value="Worker">Worker</option>
                   <option value="Athlete">Athlete</option>
-                  <option value="Other">Other</option>
+                  <option value="Other">Other / Personal use</option>
                 </select>
               </div>
 
