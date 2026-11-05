@@ -6,12 +6,9 @@ import {
   CheckCircle2, 
   Clock, 
   Calendar as CalendarIcon,
-  AlertTriangle,
-  Layers,
   ChevronDown,
   Edit3
 } from 'lucide-react';
-import { calculateTimeRemaining } from '../services/prioritizationEngine.js';
 import { categoryClassName, categoryLabel, taskTimeSummary } from '../data/taskOptions.js';
 
 // Calculate exact Day of Year (1 - 366)

@@ -57,17 +57,24 @@ export function calculateTimeRemaining(deadlineDate, deadlineTime = '23:59') {
  * Computes individual subscores and composite priority score
  */
 export function calculateTaskPriority(task, customWeights = DEFAULT_WEIGHTS) {
-  // Normalize weights to sum to 1.0
-  const totalW = (customWeights.urgency || 0.4) +
-                 (customWeights.importance || 0.25) +
-                 (customWeights.workload || 0.2) +
-                 (customWeights.difficulty || 0.15);
-                 
+  // Normalize weights to sum to 1.0. A weight set to 0 stays 0; only missing weights use the defaults.
+  const pick = (key) => {
+    const value = Number(customWeights?.[key]);
+    return Number.isFinite(value) && value >= 0 ? value : DEFAULT_WEIGHTS[key];
+  };
+  const raw = {
+    urgency: pick('urgency'),
+    importance: pick('importance'),
+    workload: pick('workload'),
+    difficulty: pick('difficulty')
+  };
+  const totalW = raw.urgency + raw.importance + raw.workload + raw.difficulty || 1;
+
   const w = {
-    urgency: (customWeights.urgency || 0.4) / totalW,
-    importance: (customWeights.importance || 0.25) / totalW,
-    workload: (customWeights.workload || 0.2) / totalW,
-    difficulty: (customWeights.difficulty || 0.15) / totalW,
+    urgency: raw.urgency / totalW,
+    importance: raw.importance / totalW,
+    workload: raw.workload / totalW,
+    difficulty: raw.difficulty / totalW,
   };
 
   if (task.status === 'completed') {

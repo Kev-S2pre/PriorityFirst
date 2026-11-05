@@ -4,7 +4,6 @@ import {
   CheckCircle2, 
   Clock, 
   TrendingUp, 
-  AlertTriangle, 
   Layers, 
   Award
 } from 'lucide-react';

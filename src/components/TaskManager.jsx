@@ -1,8 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Search, 
-  Filter, 
-  ArrowUpDown, 
   Plus, 
   CheckCircle2, 
   Clock, 
@@ -18,7 +16,7 @@ import {
   List
 } from 'lucide-react';
 import { calculateTimeRemaining } from '../services/prioritizationEngine';
-import { TASK_CATEGORIES, categoryClassName, categoryLabel, taskTimeSummary, calendarDaysUntil } from '../data/taskOptions.js';
+import { TASK_CATEGORIES, categoryClassName, categoryLabel, formatDeadline, taskTimeSummary, calendarDaysUntil } from '../data/taskOptions.js';
 
 export default function TaskManager({
   tasks,
@@ -174,7 +172,7 @@ export default function TaskManager({
             Task Management
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-            Create, track, filter, and organize tasks across study, work, training, and personal life.
+            Create, track, filter, and organize tasks across work, studies, home, health, and personal life.
           </p>
         </div>
 
@@ -435,7 +433,7 @@ export default function TaskManager({
                           fontWeight: task.isOverdue && !isCompleted ? 700 : 500,
                           color: task.isOverdue && !isCompleted ? 'var(--danger)' : (task.isDueToday && !isCompleted ? 'var(--warning)' : 'var(--text-secondary)')
                         }}>
-                          {task.deadlineDate} ({task.deadlineTime || '23:59'})
+                          {formatDeadline(task.deadlineDate, task.deadlineTime)}
                         </span>
                       </div>
 
@@ -588,7 +586,7 @@ export default function TaskManager({
                         </span>
                       </td>
                       <td style={{ padding: '0.75rem 1rem', color: task.isOverdue && !isCompleted ? 'var(--danger)' : 'inherit', fontWeight: task.isOverdue && !isCompleted ? 700 : 400 }}>
-                        {task.deadlineDate} ({task.deadlineTime || '23:59'})
+                        {formatDeadline(task.deadlineDate, task.deadlineTime)}
                       </td>
                       <td style={{ padding: '0.75rem 1rem', fontFamily: 'var(--font-mono)' }}>
                         L{task.difficulty}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, AlertCircle, Clock, Calendar, Trash2 } from 'lucide-react';
+import { X, CheckCircle2, Trash2 } from 'lucide-react';
 import { TASK_CATEGORIES, DEFAULT_CATEGORY, normalizeCategory, durationFromTimes, formatDuration, formatTime } from '../data/taskOptions.js';
 import ConfirmModal from './ConfirmModal.jsx';
 import { validateTaskTitle, validateLongText, LIMITS } from '../services/validation.js';

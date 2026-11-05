@@ -86,3 +86,18 @@ export function calendarDaysUntil(dateStr) {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   return Math.round((new Date(y, m - 1, d) - today) / 86400000);
 }
+
+// Friendly deadline: "Today, 5:00 PM", "Tomorrow, 2:00 PM", "Fri, Nov 7, 5:00 PM"
+export function formatDeadline(dateStr, timeStr = '23:59') {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr || '')) return '';
+  const time = formatTime(timeStr || '23:59');
+  const days = calendarDaysUntil(dateStr);
+  if (days === 0) return `Today, ${time}`;
+  if (days === 1) return `Tomorrow, ${time}`;
+  if (days === -1) return `Yesterday, ${time}`;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const sameYear = date.getFullYear() === new Date().getFullYear();
+  const label = date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', ...(sameYear ? {} : { year: 'numeric' }) });
+  return `${label}, ${time}`;
+}

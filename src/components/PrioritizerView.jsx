@@ -2,20 +2,16 @@ import React, { useState } from 'react';
 import { 
   Sliders, 
   HelpCircle, 
-  Sparkles, 
   CheckCircle2, 
   Clock, 
   Calendar, 
   Flame, 
   Brain, 
   Zap, 
-  Target,
-  Layers,
-  ChevronDown,
-  ChevronUp
+  Target
 } from 'lucide-react';
 import { PRESET_WEIGHTS } from '../services/prioritizationEngine';
-import { categoryClassName, categoryLabel, taskTimeSummary } from '../data/taskOptions.js';
+import { categoryClassName, categoryLabel, formatDeadline, taskTimeSummary } from '../data/taskOptions.js';
 
 export default function PrioritizerView({
   rankedTasks,
@@ -26,7 +22,6 @@ export default function PrioritizerView({
   onEditTask
 }) {
   const [showFormulaDetails, setShowFormulaDetails] = useState(false);
-  const [expandedTaskId, setExpandedTaskId] = useState(null);
 
   // Active tasks only for prioritization ranking
   const activeRanked = rankedTasks.filter(t => t.status !== 'completed');
@@ -228,7 +223,6 @@ export default function PrioritizerView({
           {activeRanked.map((task, index) => {
             const p = task.priority || {};
             const isTopRank = index === 0;
-            const isExpanded = expandedTaskId === task.id;
 
             return (
               <div 
@@ -345,7 +339,7 @@ export default function PrioritizerView({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                     <Calendar size={14} style={{ color: p.isOverdue ? 'var(--danger)' : 'var(--text-muted)' }} />
                     <span style={{ color: p.isOverdue ? 'var(--danger)' : 'inherit', fontWeight: p.isOverdue ? 700 : 500 }}>
-                      Deadline: {task.deadlineDate} ({task.deadlineTime || '23:59'})
+                      Deadline: {formatDeadline(task.deadlineDate, task.deadlineTime)}
                     </span>
                   </div>
 

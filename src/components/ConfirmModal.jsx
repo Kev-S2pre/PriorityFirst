@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { AlertTriangle, Info, HelpCircle, X } from 'lucide-react';
+import { AlertTriangle, HelpCircle, X } from 'lucide-react';
 
 export default function ConfirmModal({
   isOpen,

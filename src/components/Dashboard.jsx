@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { CATEGORY_ICONS, CATEGORY_COLORS } from '../data/categoryIcons.js';
 import { calculateTimeRemaining } from '../services/prioritizationEngine';
-import { TASK_CATEGORIES, categoryClassName, categoryLabel, taskTimeSummary, calendarDaysUntil } from '../data/taskOptions.js';
+import { TASK_CATEGORIES, categoryClassName, categoryLabel, formatDeadline, taskTimeSummary, calendarDaysUntil } from '../data/taskOptions.js';
 
 export default function Dashboard({
   tasks,
@@ -84,7 +84,7 @@ export default function Dashboard({
           <div className="hero-welcome">
             <h1>PriorityFirst² Overview</h1>
             <p>
-              Real-time analysis and multi-criteria prioritization for studies, work, training, and personal responsibilities.
+              See what matters most today across work, studies, home, health, and personal life.
             </p>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -115,13 +115,13 @@ export default function Dashboard({
               <div className="alert-banner-text">
                 <h4>{overdueTasks.length} Overdue {overdueTasks.length === 1 ? 'Task Requires' : 'Tasks Require'} Attention</h4>
                 <p>
-                  Uncompleted tasks with past deadlines received maximum urgency weighting in your priority queue.
+                  Tasks past their deadline get maximum urgency in your priority queue.
                 </p>
               </div>
             </div>
             <button 
               className="btn-secondary" 
-              style={{ borderColor: 'var(--danger-border)', color: '#fca5a5' }}
+              style={{ borderColor: 'var(--danger-border)', color: 'var(--danger)' }}
               onClick={() => onNavigateTab('tasks')}
             >
               View Overdue
@@ -137,13 +137,13 @@ export default function Dashboard({
               <div className="alert-banner-text">
                 <h4>{dueTodayTasks.length} {dueTodayTasks.length === 1 ? 'Task' : 'Tasks'} Due Today</h4>
                 <p>
-                  Schedule focus blocks today to guarantee submission before midnight cutoff times.
+                  Block out time today so nothing slips past its deadline.
                 </p>
               </div>
             </div>
             <button 
               className="btn-secondary" 
-              style={{ borderColor: 'var(--warning-border)', color: '#fcd34d' }}
+              style={{ borderColor: 'var(--warning-border)', color: 'var(--warning)' }}
               onClick={() => onNavigateTab('schedule')}
             >
               Open Schedule
@@ -364,7 +364,7 @@ export default function Dashboard({
                         <div className="meta-item">
                           <Calendar size={14} style={{ color: p.isOverdue ? 'var(--danger)' : 'var(--text-muted)' }} />
                           <span style={{ color: p.isOverdue ? 'var(--danger)' : 'inherit', fontWeight: p.isOverdue ? 700 : 500 }}>
-                            Due: {task.deadlineDate} ({task.deadlineTime || '23:59'})
+                            Due: {formatDeadline(task.deadlineDate, task.deadlineTime)}
                           </span>
                         </div>
                         <div className="meta-item">
@@ -375,7 +375,7 @@ export default function Dashboard({
                         </div>
                         <div className="meta-item">
                           <span className="difficulty-pill">
-                            Diff: Level {task.difficulty}/5
+                            Difficulty: {task.difficulty}/5
                           </span>
                         </div>
                         <div className="meta-item">

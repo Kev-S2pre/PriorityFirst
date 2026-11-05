@@ -267,7 +267,7 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
 
         {/* Error Alert Banner */}
         {error && (
-          <div style={{ margin: '1rem 2rem 0', padding: '0.75rem 1rem', background: 'var(--danger-light)', border: '1px solid var(--danger-border)', borderRadius: '8px', color: '#fca5a5', fontSize: '0.825rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ margin: '1rem 2rem 0', padding: '0.75rem 1rem', background: 'var(--danger-light)', border: '1px solid var(--danger-border)', borderRadius: '8px', color: 'var(--danger)', fontSize: '0.825rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <ShieldAlert size={16} style={{ color: 'var(--danger)', flexShrink: 0 }} />
             <span>{error}</span>
           </div>
