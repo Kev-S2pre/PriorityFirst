@@ -18,6 +18,7 @@ import { cloudSync, isCloudEnabled } from './services/cloudSync';
 import { openedFromRecoveryLink } from './services/supabaseClient';
 import { prioritizeTasks } from './services/prioritizationEngine';
 import { buildNextOccurrence } from './services/recurrence';
+import { startTimerUpdates, stopTimerUpdates, isTimerRunning, trackedMinutes, formatMinutes } from './services/timeTracking';
 import { formatDeadline } from './data/taskOptions';
 import { 
   generateNotifications, 
@@ -308,7 +309,9 @@ export default function App() {
     try {
       if (taskToEdit) {
         const wasDone = taskToEdit.status === 'completed';
-        const updated = storageService.updateTask(taskToEdit.id, taskData, currentUser?.id);
+        const latest = storageService.getTasks(currentUser?.id).find(t => t.id === taskToEdit.id);
+        const timerUpdates = !wasDone && taskData.status === 'completed' && latest ? stopTimerUpdates(latest) : {};
+        const updated = storageService.updateTask(taskToEdit.id, { ...taskData, ...timerUpdates }, currentUser?.id);
         if (!wasDone && updated.status === 'completed') spawnNextOccurrence(updated);
         setTasks(storageService.getTasks(currentUser?.id));
         showToast(`Task "${updated.title}" updated successfully`, 'success');
@@ -347,7 +350,29 @@ export default function App() {
     return storageService.createTask(next, currentUser?.id);
   };
 
+  // One timer at a time: starting a task's timer stops any other running timer
+  const handleToggleTimer = (id) => {
+    const all = storageService.getTasks(currentUser?.id);
+    const task = all.find(t => t.id === id);
+    if (!task) return;
+    if (isTimerRunning(task)) {
+      storageService.updateTask(id, stopTimerUpdates(task), currentUser?.id);
+      showToast(`Timer stopped · ${formatMinutes(trackedMinutes(task))} tracked on "${task.title}"`, 'info');
+    } else {
+      all.filter(t => t.id !== id && isTimerRunning(t))
+        .forEach(t => storageService.updateTask(t.id, stopTimerUpdates(t), currentUser?.id));
+      storageService.updateTask(id, { ...startTimerUpdates(task), ...(task.status === 'pending' ? { status: 'in_progress' } : {}) }, currentUser?.id);
+      showToast(`Timer started for "${task.title}"`, 'info');
+    }
+    setTasks(storageService.getTasks(currentUser?.id));
+  };
+
   const handleToggleComplete = (id) => {
+    // Completing a task stops its timer and keeps the tracked time
+    const current = storageService.getTasks(currentUser?.id).find(t => t.id === id);
+    if (current && current.status !== 'completed' && isTimerRunning(current)) {
+      storageService.updateTask(id, stopTimerUpdates(current), currentUser?.id);
+    }
     const updated = storageService.toggleComplete(id, currentUser?.id);
     if (updated) {
       const isDone = updated.status === 'completed';
@@ -473,6 +498,7 @@ export default function App() {
                 onDeleteTask={handleDeleteTask}
                 onToggleComplete={handleToggleComplete}
                 onUpdateTask={handleUpdateTask}
+                onToggleTimer={handleToggleTimer}
               />
             )}
 
@@ -481,6 +507,7 @@ export default function App() {
                 rankedTasks={rankedTasks}
                 settings={settings}
                 onToggleComplete={handleToggleComplete}
+                onToggleTimer={handleToggleTimer}
                 onEditTask={handleEditTask}
                 onOpenAddTask={handleOpenAddTask}
                 onOpenSettings={() => openSettings('general')}

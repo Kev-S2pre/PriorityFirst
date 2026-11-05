@@ -84,6 +84,8 @@ function sanitizeTask(task) {
     reminderAt: typeof task.reminderAt === 'string' && task.reminderAt ? task.reminderAt : null,
     recurrence: normalizeRecurrence(task.recurrence),
     subtasks: sanitizeSubtasks(task.subtasks),
+    actualMinutes: Math.max(0, Math.round(Number(task.actualMinutes) || 0)),
+    timerStartedAt: typeof task.timerStartedAt === 'string' && !Number.isNaN(Date.parse(task.timerStartedAt)) ? task.timerStartedAt : null,
   };
 }
 

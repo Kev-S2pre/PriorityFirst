@@ -1991,3 +1991,25 @@ img, svg, video, canvas { max-width: 100%; }
 .subtask-add .form-input { flex: 1; }
 .subtask-progress { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
 .repeat-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--info); font-weight: 600; }
+.plan-hero-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ===== Task timer ===== */
+.timer-btn {
+  display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; flex-shrink: 0;
+  border: 1px solid var(--border-card); border-radius: var(--radius-full);
+  background: var(--bg-surface); color: var(--text-secondary);
+  font: inherit; font-size: 0.75rem; font-weight: 600; font-variant-numeric: tabular-nums;
+  cursor: pointer; transition: all var(--trans-fast);
+}
+.timer-btn:hover { border-color: var(--success-border); color: var(--success); }
+.timer-btn:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.timer-btn.running { background: var(--success-light); border-color: var(--success-border); color: var(--success); }
+.timer-btn.running svg { animation: timer-pulse 1.6s ease-in-out infinite; }
+.timer-btn.compact { padding: 3px 8px; }
+@keyframes timer-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .timer-btn.running svg { animation: none; } }
+
+.accuracy-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; margin: 0.75rem 0; }
+.accuracy-stat { display: flex; flex-direction: column; gap: 2px; }
+.accuracy-stat strong { font-family: var(--font-mono); font-size: 1.1rem; color: var(--text-main); }
+.accuracy-stat span { font-size: 0.72rem; color: var(--text-muted); }

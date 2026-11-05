@@ -11,11 +11,14 @@ import {
   Coffee,
   Settings,
   Plus,
-  Sparkles
+  Sparkles,
+  CalendarPlus
 } from 'lucide-react';
+import { buildIcs, downloadIcs } from '../services/icsExport.js';
 import { planDay, dateKey, DEFAULT_PLANNER } from '../services/dayPlanner.js';
 import { categoryClassName, categoryLabel, formatTime, formatDuration, formatDeadline } from '../data/taskOptions.js';
 import { CATEGORY_ICONS } from '../data/categoryIcons.js';
+import TimerButton from './TimerButton.jsx';
 
 function addDays(key, days) {
   const [y, m, d] = key.split('-').map(Number);
@@ -29,7 +32,7 @@ function dayLabel(key, todayKey) {
   return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-export default function PlanMyDay({ rankedTasks, settings, onToggleComplete, onEditTask, onOpenAddTask, onOpenSettings }) {
+export default function PlanMyDay({ rankedTasks, settings, onToggleComplete, onToggleTimer, onEditTask, onOpenAddTask, onOpenSettings }) {
   // Re-plan every minute so the timeline keeps up with the clock
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -67,10 +70,26 @@ export default function PlanMyDay({ rankedTasks, settings, onToggleComplete, onE
             Your top-priority tasks, fitted into your free time. Fixed appointments stay where they are.
           </p>
         </div>
-        <button type="button" className="btn-secondary plan-hours-btn" onClick={onOpenSettings} id="btn-plan-hours">
-          <Settings size={15} />
-          <span>{formatTime(dayStart)} – {formatTime(dayEnd)}</span>
-        </button>
+        <div className="plan-hero-actions">
+          <button type="button" className="btn-secondary plan-hours-btn" onClick={onOpenSettings} id="btn-plan-hours" title="Change working hours">
+            <Settings size={15} />
+            <span>{formatTime(dayStart)} – {formatTime(dayEnd)}</span>
+          </button>
+          <button
+            type="button"
+            className="btn-secondary"
+            id="btn-plan-export"
+            disabled={plan.blocks.length === 0}
+            title="Download this day's plan as an .ics calendar file"
+            onClick={() => downloadIcs(
+              buildIcs(plan.blocks.map(b => ({ task: b.task, slot: { date: plan.date, startTime: b.startTime, endTime: b.endTime } })), { name: `PriorityFirst plan ${plan.date}` }),
+              `priorityfirst-plan-${plan.date}.ics`
+            )}
+          >
+            <CalendarPlus size={15} />
+            <span>Add to Calendar</span>
+          </button>
+        </div>
       </div>
 
       <div className="plan-day-strip" role="tablist" aria-label="Choose a day">
@@ -161,6 +180,7 @@ export default function PlanMyDay({ rankedTasks, settings, onToggleComplete, onE
                         <span className="plan-due">Due {formatDeadline(task.deadlineDate, task.deadlineTime)}</span>
                       </div>
                     </div>
+                    <TimerButton task={task} onToggleTimer={onToggleTimer} compact />
                     <button type="button" className="action-icon-btn" onClick={() => onEditTask(task)} aria-label={`Edit "${task.title}"`} title="Edit">
                       <Edit3 size={15} />
                     </button>

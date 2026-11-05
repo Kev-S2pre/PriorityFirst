@@ -156,8 +156,8 @@ export const browserNotificationService = {
 
     try {
       return new Notification(title, {
-        icon: '/favicon.svg',
-        badge: '/favicon.svg',
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
         ...options
       });
     } catch (err) {

@@ -7,9 +7,11 @@ import {
   Clock, 
   Calendar as CalendarIcon,
   ChevronDown,
-  Edit3
+  Edit3,
+  CalendarPlus
 } from 'lucide-react';
 import { categoryClassName, categoryLabel, taskTimeSummary } from '../data/taskOptions.js';
+import { buildIcs, downloadIcs } from '../services/icsExport.js';
 
 // Calculate exact Day of Year (1 - 366)
 function getDayOfYear(d) {
@@ -54,6 +56,11 @@ export default function ScheduleCalendar({
   onEditTask,
   onToggleComplete
 }) {
+  // Every open task (repeating ones carry their repeat rule) as one calendar file
+  const exportOpenTasks = () => {
+    const open = tasks.filter(t => t.status !== 'completed');
+    downloadIcs(buildIcs(open, { name: 'PriorityFirst tasks' }), 'priorityfirst-tasks.ics');
+  };
   const today = useMemo(() => new Date(), []);
   
   // Navigation state (Defaulting to current month & year)
@@ -628,6 +635,18 @@ export default function ScheduleCalendar({
             </div>
           </div>
 
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            className="btn-secondary"
+            style={{ fontSize: '13px', padding: '6px 14px' }}
+            onClick={exportOpenTasks}
+            disabled={!tasks.some(t => t.status !== 'completed')}
+            id="btn-calendar-export"
+            title="Download an .ics file for Google Calendar, Outlook or Apple Calendar"
+          >
+            <CalendarPlus size={15} />
+            <span>Export to Calendar</span>
+          </button>
           {!selectedDayInfo.isPast && (
             <button
               className="btn-primary"
@@ -639,6 +658,7 @@ export default function ScheduleCalendar({
               <span>Add Task for this Date</span>
             </button>
           )}
+          </div>
         </div>
 
         <div style={{ padding: '20px' }}>

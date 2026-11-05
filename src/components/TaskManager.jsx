@@ -15,8 +15,12 @@ import {
   Grid,
   List,
   Repeat,
-  ListChecks
+  ListChecks,
+  CalendarPlus
 } from 'lucide-react';
+import { buildIcs, downloadIcs, safeFilename } from '../services/icsExport.js';
+import TimerButton from './TimerButton.jsx';
+import { trackedMinutes, formatMinutes } from '../services/timeTracking.js';
 import { recurrenceLabel } from '../services/recurrence.js';
 import { calculateTimeRemaining } from '../services/prioritizationEngine';
 import { TASK_CATEGORIES, categoryClassName, categoryLabel, formatDeadline, taskTimeSummary, calendarDaysUntil } from '../data/taskOptions.js';
@@ -29,7 +33,8 @@ export default function TaskManager({
   onEditTask,
   onDeleteTask,
   onToggleComplete,
-  onUpdateTask
+  onUpdateTask,
+  onToggleTimer
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
@@ -428,6 +433,13 @@ export default function TaskManager({
                             <ListChecks size={12} /> {task.subtasks.filter(s => s.done).length}/{task.subtasks.length}
                           </span>
                         )}
+
+                        {onToggleTimer && <TimerButton task={task} onToggleTimer={onToggleTimer} compact />}
+                        {isCompleted && task.actualMinutes > 0 && (
+                          <span className="subtask-progress" title="Time tracked">
+                            <Clock size={12} /> {formatMinutes(task.actualMinutes)}
+                          </span>
+                        )}
                       </div>
 
                       <h3 className="task-title" title={task.title}>
@@ -670,6 +682,11 @@ export default function TaskManager({
                     {selectedTaskForDetails.description}
                   </p>
                 )}
+                {trackedMinutes(selectedTaskForDetails) > 0 && (
+                  <span className="subtask-progress" style={{ marginTop: '0.5rem', marginRight: '0.75rem' }}>
+                    <Clock size={12} /> {formatMinutes(trackedMinutes(selectedTaskForDetails))} tracked · estimated {formatMinutes((Number(selectedTaskForDetails.estimatedHours) || 0) * 60)}
+                  </span>
+                )}
                 {selectedTaskForDetails.recurrence && selectedTaskForDetails.recurrence !== 'none' && (
                   <span className="repeat-badge" style={{ marginTop: '0.5rem' }}>
                     <Repeat size={12} /> Repeats {recurrenceLabel(selectedTaskForDetails.recurrence).toLowerCase()}
@@ -827,7 +844,14 @@ export default function TaskManager({
                 <Edit3 size={15} />
                 <span>Edit Task</span>
               </button>
-              <button 
+              <button
+                className="btn-secondary"
+                onClick={() => downloadIcs(buildIcs([selectedTaskForDetails]), `${safeFilename(selectedTaskForDetails.title)}.ics`)}
+              >
+                <CalendarPlus size={15} />
+                <span>Add to Calendar</span>
+              </button>
+              <button
                 className="btn-primary"
                 onClick={() => setSelectedTaskForDetails(null)}
               >

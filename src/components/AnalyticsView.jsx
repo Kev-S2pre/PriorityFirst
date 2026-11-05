@@ -10,6 +10,7 @@ import {
 import { CATEGORY_ICONS } from '../data/categoryIcons.js';
 import { calculateTimeRemaining } from '../services/prioritizationEngine';
 import { TASK_CATEGORIES } from '../data/taskOptions.js';
+import { estimateAccuracy, describeAccuracy, formatMinutes } from '../services/timeTracking.js';
 
 export default function AnalyticsView({ tasks }) {
   const totalCount = tasks.length;
@@ -212,6 +213,31 @@ export default function AnalyticsView({ tasks }) {
               </div>
             </div>
           </div>
+
+          {/* Estimates vs actual time (from the task timer) */}
+          {(() => {
+            const accuracy = estimateAccuracy(tasks);
+            return (
+              <div className="glass-card" id="card-estimate-accuracy">
+                <div className="card-body">
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Clock size={16} style={{ color: 'var(--primary)' }} />
+                    <span>Time Estimates vs Reality</span>
+                  </h3>
+                  {accuracy.count > 0 && (
+                    <div className="accuracy-stats">
+                      <div className="accuracy-stat"><strong>{accuracy.count}</strong><span>tracked tasks</span></div>
+                      <div className="accuracy-stat"><strong>{formatMinutes(accuracy.estimatedMinutes)}</strong><span>estimated</span></div>
+                      <div className="accuracy-stat"><strong style={{ color: accuracy.ratio > 1.1 ? 'var(--warning)' : 'var(--success)' }}>{formatMinutes(accuracy.actualMinutes)}</strong><span>actual</span></div>
+                    </div>
+                  )}
+                  <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginTop: accuracy.count ? 0 : '0.4rem' }}>
+                    {describeAccuracy(accuracy)}
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Time Management Insights Card */}
           <div className="glass-card" style={{ borderLeft: '4px solid var(--primary)' }}>

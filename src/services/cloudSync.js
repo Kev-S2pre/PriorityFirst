@@ -46,6 +46,8 @@ function taskToRow(task, userId) {
     reminder_at: localToIso(task.reminderAt),
     recurrence: task.recurrence || 'none',
     subtasks: task.subtasks || [],
+    actual_minutes: Math.max(0, Math.round(Number(task.actualMinutes) || 0)),
+    timer_started_at: task.timerStartedAt || null,
     created_at: task.createdAt,
     completed_at: task.completedAt || null
   };
@@ -71,6 +73,8 @@ function rowToTask(row) {
     reminderAt: isoToLocal(row.reminder_at),
     recurrence: row.recurrence || 'none',
     subtasks: Array.isArray(row.subtasks) ? row.subtasks : [],
+    actualMinutes: Number(row.actual_minutes) || 0,
+    timerStartedAt: row.timer_started_at || null,
     createdAt: row.created_at,
     completedAt: row.completed_at
   };
