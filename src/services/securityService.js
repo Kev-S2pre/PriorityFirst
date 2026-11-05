@@ -25,7 +25,7 @@ export const securityService = {
       institutionId: user.institutionId || '',
       institutionType: user.institutionType || '',
       department: user.department || '',
-      classification: user.classification || user.role || 'Student',
+      classification: user.classification || user.role || 'Other',
       otherDescription: user.otherDescription || ''
     });
   }

@@ -62,7 +62,7 @@ function friendlyAuthError(error) {
 }
 
 function profileToSessionUser(authUser, profile) {
-  const classification = profile?.classification || 'Student';
+  const classification = profile?.classification || 'Other';
   return {
     id: authUser.id,
     name: profile?.display_name || authUser.user_metadata?.display_name || authUser.email.split('@')[0],
@@ -93,7 +93,7 @@ const cloudAuth = {
     const fresh = {
       id: authUser.id,
       display_name: meta.display_name || authUser.email.split('@')[0],
-      classification: CLASSIFICATIONS.includes(meta.classification) ? meta.classification : 'Student',
+      classification: CLASSIFICATIONS.includes(meta.classification) ? meta.classification : 'Other',
       other_description: meta.other_description || '',
       institution: meta.institution_id ? (meta.institution || '') : '',
       institution_id: meta.institution_id || null,
@@ -350,8 +350,8 @@ export const authService = {
       institutionId: userRecord.institutionId || '',
       institutionType: userRecord.institutionType || '',
       department: userRecord.department || '',
-      role: userRecord.classification || userRecord.role || 'Student',
-      classification: userRecord.classification || userRecord.role || 'Student',
+      role: userRecord.classification || userRecord.role || 'Other',
+      classification: userRecord.classification || userRecord.role || 'Other',
       otherDescription: userRecord.otherDescription || '',
       avatar: userRecord.avatar || '',
       createdAt: userRecord.createdAt || '',
@@ -363,10 +363,10 @@ export const authService = {
   },
 
   /**
-   * Register a new student account
+   * Register a new account
    * MANDATORY: Does NOT automatically log the user in.
    */
-  async register({ name, email, password, confirmPassword, acceptedTerms = false, institution = '', institutionId = '', institutionType = '', department = '', classification = 'Student', otherDescription = '' }) {
+  async register({ name, email, password, confirmPassword, acceptedTerms = false, institution = '', institutionId = '', institutionType = '', department = '', classification = 'Other', otherDescription = '' }) {
     await this.init();
 
     const cleanName = tidyName(name);
@@ -446,7 +446,7 @@ export const authService = {
   /**
    * Updates the signed-in user's profile details and refreshes the session
    */
-  async updateProfile(userId, { name, email, institution = '', institutionId = '', institutionType = '', department = '', classification = 'Student', otherDescription = '' }) {
+  async updateProfile(userId, { name, email, institution = '', institutionId = '', institutionType = '', department = '', classification = 'Other', otherDescription = '' }) {
     const cleanName = tidyName(name);
     const cleanEmail = (email || '').trim().toLowerCase();
 

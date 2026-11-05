@@ -286,13 +286,14 @@ export default function AuthView({ onAuthSuccess, recoveryMode = false, onRecove
                 <div style={{ position: 'relative' }}>
                   <input 
                     id="login-email"
+                    name="email"
                     type="email"
                     className="form-input"
                     placeholder="you@example.com"
                     value={loginEmail}
                     maxLength={254}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    autoComplete="email"
+                    autoComplete="username"
                     autoFocus
                   />
                   <Mail size={16} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
