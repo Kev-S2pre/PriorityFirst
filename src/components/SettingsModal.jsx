@@ -13,6 +13,8 @@ import {
   Lock,
   Mail,
   SlidersHorizontal,
+  Clock,
+  Coffee,
   Settings as SettingsIcon
 } from 'lucide-react';
 import { browserNotificationService, playNotificationSound } from '../services/notificationService';
@@ -247,6 +249,50 @@ export default function SettingsModal({
                     />
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>hours</span>
                   </div>
+                </SettingRow>
+                <SettingRow
+                  icon={Clock}
+                  title="Working Hours"
+                  description="Plan My Day only schedules tasks inside this window."
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    <input
+                      type="time"
+                      className="form-input"
+                      style={{ width: '120px' }}
+                      aria-label="Day starts at"
+                      value={settings.dayStart || '08:00'}
+                      onChange={(e) => {
+                        if (e.target.value && e.target.value < (settings.dayEnd || '18:00')) onUpdateSettings({ dayStart: e.target.value });
+                      }}
+                    />
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>to</span>
+                    <input
+                      type="time"
+                      className="form-input"
+                      style={{ width: '120px' }}
+                      aria-label="Day ends at"
+                      value={settings.dayEnd || '18:00'}
+                      onChange={(e) => {
+                        if (e.target.value && e.target.value > (settings.dayStart || '08:00')) onUpdateSettings({ dayEnd: e.target.value });
+                      }}
+                    />
+                  </div>
+                </SettingRow>
+                <SettingRow
+                  icon={Coffee}
+                  title="Break Between Tasks"
+                  description="A short pause Plan My Day leaves after each task."
+                >
+                  <select
+                    className="form-select"
+                    style={{ width: '120px' }}
+                    aria-label="Break between tasks"
+                    value={settings.breakMinutes ?? 10}
+                    onChange={(e) => onUpdateSettings({ breakMinutes: Number(e.target.value) })}
+                  >
+                    {[0, 5, 10, 15, 20, 30].map(m => <option key={m} value={m}>{m === 0 ? 'No break' : `${m} min`}</option>)}
+                  </select>
                 </SettingRow>
                 <p className="form-hint">Priority weights can be tuned on the Prioritizer page.</p>
               </div>

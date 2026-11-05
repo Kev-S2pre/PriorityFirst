@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, Trash2 } from 'lucide-react';
+import { X, CheckCircle2, Trash2, Plus } from 'lucide-react';
+import { RECURRENCE_OPTIONS, normalizeRecurrence } from '../services/recurrence.js';
 import { TASK_CATEGORIES, DEFAULT_CATEGORY, normalizeCategory, durationFromTimes, formatDuration, formatTime } from '../data/taskOptions.js';
 import ConfirmModal from './ConfirmModal.jsx';
 import { validateTaskTitle, validateLongText, LIMITS } from '../services/validation.js';
@@ -25,6 +26,9 @@ export default function TaskModal({
   const [importance, setImportance] = useState('Medium');
   const [status, setStatus] = useState('pending');
   const [notes, setNotes] = useState('');
+  const [recurrence, setRecurrence] = useState('none');
+  const [subtasks, setSubtasks] = useState([]);
+  const [newSubtask, setNewSubtask] = useState('');
   const [errors, setErrors] = useState({});
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -48,7 +52,9 @@ export default function TaskModal({
         reminderAt: taskToEdit.reminderAt || '',
         importance: taskToEdit.importance || 'Medium',
         status: taskToEdit.status || 'pending',
-        notes: taskToEdit.notes || ''
+        notes: taskToEdit.notes || '',
+        recurrence: normalizeRecurrence(taskToEdit.recurrence),
+        subtasks: (taskToEdit.subtasks || []).map(s => ({ ...s }))
       };
     } else {
       let defaultDate = '';
@@ -76,7 +82,9 @@ export default function TaskModal({
         reminderAt: '',
         importance: 'Medium',
         status: 'pending',
-        notes: ''
+        notes: '',
+        recurrence: 'none',
+        subtasks: []
       };
     }
 
@@ -93,6 +101,9 @@ export default function TaskModal({
     setImportance(initialValues.importance);
     setStatus(initialValues.status);
     setNotes(initialValues.notes);
+    setRecurrence(initialValues.recurrence);
+    setSubtasks(initialValues.subtasks);
+    setNewSubtask('');
     setInitialFormState(initialValues);
     setErrors({});
     setShowDiscardConfirm(false);
@@ -113,7 +124,10 @@ export default function TaskModal({
       reminderAt !== initialFormState.reminderAt ||
       importance !== initialFormState.importance ||
       status !== initialFormState.status ||
-      notes !== initialFormState.notes
+      notes !== initialFormState.notes ||
+      recurrence !== initialFormState.recurrence ||
+      newSubtask.trim() !== '' ||
+      JSON.stringify(subtasks) !== JSON.stringify(initialFormState.subtasks)
     );
   };
 
@@ -163,9 +177,21 @@ export default function TaskModal({
     return Object.keys(newErrors).length === 0;
   };
 
+  const addSubtask = () => {
+    const text = newSubtask.trim();
+    if (!text || subtasks.length >= 20) return;
+    setSubtasks([...subtasks, { id: `sub-${Date.now()}-${subtasks.length}`, text: text.slice(0, 120), done: false }]);
+    setNewSubtask('');
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validate()) return;
+    // Keep a checklist item that was typed but not added yet
+    const pending = newSubtask.trim();
+    const finalSubtasks = pending && subtasks.length < 20
+      ? [...subtasks, { id: `sub-${Date.now()}-${subtasks.length}`, text: pending.slice(0, 120), done: false }]
+      : subtasks;
 
     onSave({
       title: title.trim(),
@@ -180,7 +206,9 @@ export default function TaskModal({
       reminderAt: reminderAt || null,
       importance,
       status,
-      notes: notes.trim()
+      notes: notes.trim(),
+      recurrence,
+      subtasks: finalSubtasks.filter(s => s.text.trim())
     });
 
     onClose();
@@ -214,7 +242,7 @@ export default function TaskModal({
                 id="task-title-input"
                 type="text"
                 className="form-input"
-                placeholder="e.g. Fluid Mechanics Venturi Lab Report"
+                placeholder="e.g. Finish quarterly report, Pay electricity bill, Gym session"
                 value={title}
                 maxLength={120}
                 onChange={(e) => setTitle(e.target.value)}
@@ -232,7 +260,7 @@ export default function TaskModal({
                 id="task-desc-input"
                 type="text"
                 className="form-input"
-                placeholder="Brief summary of required deliverables or problem statements..."
+                placeholder="A short summary of what needs to be done..."
                 value={description}
                 maxLength={500}
                 onChange={(e) => setDescription(e.target.value)}
@@ -407,6 +435,79 @@ export default function TaskModal({
               </div>
             </div>
 
+            {/* Repeat */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="task-recurrence-select">Repeats</label>
+              <select
+                id="task-recurrence-select"
+                className="form-select"
+                value={recurrence}
+                onChange={(e) => setRecurrence(e.target.value)}
+              >
+                {RECURRENCE_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+              {recurrence !== 'none' && (
+                <span className="form-hint">When you complete it, the next one is created automatically with a new deadline.</span>
+              )}
+            </div>
+
+            {/* Checklist */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="task-subtask-input">
+                Checklist (Optional){subtasks.length > 0 && ` · ${subtasks.filter(s => s.done).length}/${subtasks.length} done`}
+              </label>
+              {subtasks.length > 0 && (
+                <ul className="subtask-list">
+                  {subtasks.map((s, i) => (
+                    <li key={s.id} className={`subtask-item ${s.done ? 'done' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={s.done}
+                        onChange={() => setSubtasks(subtasks.map((x, j) => (j === i ? { ...x, done: !x.done } : x)))}
+                        aria-label={`Mark "${s.text}" done`}
+                      />
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={s.text}
+                        maxLength={120}
+                        onChange={(e) => setSubtasks(subtasks.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)))}
+                        aria-label={`Checklist item ${i + 1}`}
+                      />
+                      <button
+                        type="button"
+                        className="action-icon-btn"
+                        onClick={() => setSubtasks(subtasks.filter((_, j) => j !== i))}
+                        aria-label={`Remove "${s.text}"`}
+                      >
+                        <X size={14} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {subtasks.length < 20 && (
+                <div className="subtask-add">
+                  <input
+                    id="task-subtask-input"
+                    type="text"
+                    className="form-input"
+                    placeholder="Add a step, then press Enter"
+                    value={newSubtask}
+                    maxLength={120}
+                    onChange={(e) => setNewSubtask(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSubtask(); } }}
+                  />
+                  <button type="button" className="btn-secondary" onClick={addSubtask} disabled={!newSubtask.trim()}>
+                    <Plus size={15} />
+                    <span>Add</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Optional Notes */}
             <div className="form-group">
               <label className="form-label" htmlFor="task-notes-input">
@@ -416,7 +517,7 @@ export default function TaskModal({
                 id="task-notes-input"
                 className="form-textarea"
                 rows={3}
-                placeholder="Include reference equations, textbook chapters, rubric guidelines, or lab partners..."
+                placeholder="Links, contacts, addresses, or anything you want to remember..."
                 value={notes}
                 maxLength={2000}
                 onChange={(e) => setNotes(e.target.value)}

@@ -44,6 +44,8 @@ function taskToRow(task, userId) {
     start_time: task.startTime || null,
     end_time: task.endTime || null,
     reminder_at: localToIso(task.reminderAt),
+    recurrence: task.recurrence || 'none',
+    subtasks: task.subtasks || [],
     created_at: task.createdAt,
     completed_at: task.completedAt || null
   };
@@ -67,6 +69,8 @@ function rowToTask(row) {
     endTime: trimTime(row.end_time),
     scheduledStartTime: startTime,
     reminderAt: isoToLocal(row.reminder_at),
+    recurrence: row.recurrence || 'none',
+    subtasks: Array.isArray(row.subtasks) ? row.subtasks : [],
     createdAt: row.created_at,
     completedAt: row.completed_at
   };
@@ -80,7 +84,10 @@ function settingsToRow(settings, userId) {
     weight_preset: settings.weightPreset || 'balanced',
     browser_notifications_enabled: !!settings.browserNotificationsEnabled,
     sound_alerts_enabled: !!settings.soundAlertsEnabled,
-    daily_workload_limit_hours: Number(settings.dailyWorkloadLimitHours) || 8
+    daily_workload_limit_hours: Number(settings.dailyWorkloadLimitHours) || 8,
+    day_start: settings.dayStart || '08:00',
+    day_end: settings.dayEnd || '18:00',
+    break_minutes: Number.isFinite(Number(settings.breakMinutes)) ? Number(settings.breakMinutes) : 10
   };
 }
 
@@ -91,7 +98,10 @@ function rowToSettings(row) {
     weightPreset: row.weight_preset,
     browserNotificationsEnabled: row.browser_notifications_enabled,
     soundAlertsEnabled: row.sound_alerts_enabled,
-    dailyWorkloadLimitHours: Number(row.daily_workload_limit_hours)
+    dailyWorkloadLimitHours: Number(row.daily_workload_limit_hours),
+    dayStart: trimTime(row.day_start) || '08:00',
+    dayEnd: trimTime(row.day_end) || '18:00',
+    breakMinutes: row.break_minutes ?? 10
   };
 }
 

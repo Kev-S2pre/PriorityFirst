@@ -13,8 +13,11 @@ import {
   FileText,
   AlertTriangle,
   Grid,
-  List
+  List,
+  Repeat,
+  ListChecks
 } from 'lucide-react';
+import { recurrenceLabel } from '../services/recurrence.js';
 import { calculateTimeRemaining } from '../services/prioritizationEngine';
 import { TASK_CATEGORIES, categoryClassName, categoryLabel, formatDeadline, taskTimeSummary, calendarDaysUntil } from '../data/taskOptions.js';
 
@@ -25,7 +28,8 @@ export default function TaskManager({
   onOpenAddTask,
   onEditTask,
   onDeleteTask,
-  onToggleComplete
+  onToggleComplete,
+  onUpdateTask
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
@@ -412,6 +416,18 @@ export default function TaskManager({
                             Score: {p.score}
                           </span>
                         )}
+
+                        {task.recurrence && task.recurrence !== 'none' && (
+                          <span className="repeat-badge" title={recurrenceLabel(task.recurrence)}>
+                            <Repeat size={12} /> {recurrenceLabel(task.recurrence).replace('Every ', '')}
+                          </span>
+                        )}
+
+                        {task.subtasks?.length > 0 && (
+                          <span className="subtask-progress" title="Checklist progress">
+                            <ListChecks size={12} /> {task.subtasks.filter(s => s.done).length}/{task.subtasks.length}
+                          </span>
+                        )}
                       </div>
 
                       <h3 className="task-title" title={task.title}>
@@ -654,7 +670,41 @@ export default function TaskManager({
                     {selectedTaskForDetails.description}
                   </p>
                 )}
+                {selectedTaskForDetails.recurrence && selectedTaskForDetails.recurrence !== 'none' && (
+                  <span className="repeat-badge" style={{ marginTop: '0.5rem' }}>
+                    <Repeat size={12} /> Repeats {recurrenceLabel(selectedTaskForDetails.recurrence).toLowerCase()}
+                  </span>
+                )}
               </div>
+
+              {/* Checklist: ticking here saves right away */}
+              {(() => {
+                const fresh = tasks.find(t => t.id === selectedTaskForDetails.id) || selectedTaskForDetails;
+                const items = fresh.subtasks || [];
+                if (items.length === 0) return null;
+                return (
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+                      Checklist · {items.filter(s => s.done).length}/{items.length} done
+                    </div>
+                    <ul className="subtask-list">
+                      {items.map(s => (
+                        <li key={s.id} className={`subtask-item ${s.done ? 'done' : ''}`}>
+                          <input
+                            type="checkbox"
+                            id={`subtask-${s.id}`}
+                            checked={s.done}
+                            onChange={() => onUpdateTask?.(fresh.id, {
+                              subtasks: items.map(x => (x.id === s.id ? { ...x, done: !x.done } : x))
+                            })}
+                          />
+                          <label className="subtask-text" htmlFor={`subtask-${s.id}`}>{s.text}</label>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })()}
 
               {/* Prioritization Score Breakdown Box */}
               <div style={{ background: 'var(--bg-app)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-md)', padding: '1rem' }}>

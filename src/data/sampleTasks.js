@@ -57,6 +57,11 @@ export function generateSampleTasks() {
       importance: 'High',
       status: 'pending',
       notes: 'Reuse the template from the last review.',
+      subtasks: [
+        { id: 'sub-102-1', text: 'Project status', done: true },
+        { id: 'sub-102-2', text: 'Risks and blockers', done: false },
+        { id: 'sub-102-3', text: 'Next milestones', done: false }
+      ],
       createdAt: new Date(Date.now() - 3600000 * 18).toISOString(),
       completedAt: null
     },
@@ -87,6 +92,11 @@ export function generateSampleTasks() {
       importance: 'High',
       status: 'pending',
       notes: 'Account numbers are in the household folder.',
+      recurrence: 'monthly',
+      subtasks: [
+        { id: 'sub-104-1', text: 'Electricity', done: false },
+        { id: 'sub-104-2', text: 'Internet', done: false }
+      ],
       createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
       completedAt: null
     },
@@ -117,6 +127,7 @@ export function generateSampleTasks() {
       importance: 'Medium',
       status: 'pending',
       notes: '',
+      recurrence: 'weekly',
       createdAt: new Date(Date.now() - 3600000 * 6).toISOString(),
       completedAt: null
     },

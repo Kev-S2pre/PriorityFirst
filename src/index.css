@@ -1894,3 +1894,100 @@ html, body, #root { max-width: 100%; overflow-x: hidden; }
 /* Never allow sideways page scroll */
 html, body { max-width: 100%; overflow-x: clip; }
 img, svg, video, canvas { max-width: 100%; }
+
+/* ===== Plan My Day ===== */
+.plan-view { display: flex; flex-direction: column; gap: 1.25rem; }
+.plan-hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.view-title { display: flex; align-items: center; gap: 0.6rem; font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text-main); margin-bottom: 0.35rem; }
+.view-subtitle { color: var(--text-secondary); font-size: 0.95rem; max-width: 60ch; }
+.plan-hours-btn { white-space: nowrap; }
+
+.plan-day-strip { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.plan-day-strip::-webkit-scrollbar { display: none; }
+.plan-day-chip {
+  flex: 0 0 auto; padding: 0.5rem 0.95rem; border-radius: var(--radius-full);
+  border: 1px solid var(--border-card); background: var(--bg-card); color: var(--text-secondary);
+  font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all var(--trans-fast);
+}
+.plan-day-chip:hover { border-color: var(--border-hover); color: var(--text-main); }
+.plan-day-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: var(--brand-glow); }
+.plan-day-chip:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+
+.plan-summary { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.75rem; }
+.plan-summary-item {
+  display: flex; flex-direction: column; gap: 0.2rem; padding: 0.9rem 1rem;
+  background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-lg);
+}
+.plan-summary-value { font-size: 1.35rem; font-weight: 800; font-family: var(--font-mono); color: var(--text-main); }
+.plan-summary-value.warn { color: var(--warning); }
+.plan-summary-label { font-size: 0.78rem; color: var(--text-muted); }
+
+.plan-timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.plan-block { display: grid; grid-template-columns: 72px 1fr; gap: 0.75rem; align-items: stretch; }
+.plan-time {
+  display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-start; padding-top: 0.85rem;
+  font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; color: var(--text-main); white-space: nowrap;
+}
+.plan-time-end { font-weight: 500; color: var(--text-muted); font-size: 0.72rem; }
+.plan-card {
+  position: relative; display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.85rem 0.9rem 0.85rem 1.1rem;
+  background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm); transition: border-color var(--trans-fast), transform var(--trans-fast);
+}
+.plan-card::before {
+  content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 4px;
+  border-radius: 0 4px 4px 0; background: var(--primary);
+}
+.plan-block.fixed .plan-card::before { background: var(--info); }
+.plan-card:hover { border-color: var(--border-hover); transform: translateY(-1px); }
+.plan-check {
+  flex-shrink: 0; display: flex; padding: 0; margin-top: 1px; border: 0; background: none;
+  color: var(--text-muted); cursor: pointer; border-radius: var(--radius-full); transition: color var(--trans-fast);
+}
+.plan-check:hover { color: var(--success); }
+.plan-check:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.plan-card-body { flex: 1; min-width: 0; }
+.plan-card-title { font-weight: 700; color: var(--text-main); font-size: 0.95rem; overflow-wrap: anywhere; }
+.plan-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; margin-top: 0.35rem; font-size: 0.75rem; color: var(--text-secondary); }
+.plan-card-meta .category-badge { display: inline-flex; align-items: center; gap: 4px; }
+.plan-tag {
+  display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: var(--radius-full);
+  background: var(--primary-light); color: var(--primary); font-weight: 600;
+}
+.plan-tag.fixed { background: var(--info-light); color: var(--info); }
+.plan-tag.partial { background: var(--warning-light); color: var(--warning); }
+.plan-due { color: var(--text-muted); }
+.plan-gap {
+  display: flex; align-items: center; gap: 0.35rem; margin-left: calc(72px + 0.75rem); padding: 0 0.25rem;
+  font-size: 0.72rem; color: var(--text-muted); font-style: italic;
+}
+
+.plan-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.5rem; padding: 2.5rem 1.25rem; }
+.plan-empty h3 { font-size: 1.05rem; color: var(--text-main); }
+.plan-empty p { color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem; }
+
+.plan-unscheduled ul { list-style: none; margin: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.plan-unscheduled-item { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
+
+@media (max-width: 640px) {
+  .view-title { font-size: 1.4rem; }
+  .plan-summary { grid-template-columns: 1fr 1fr; }
+  .plan-summary-item:first-child { grid-column: 1 / -1; }
+  .plan-block { grid-template-columns: 62px 1fr; gap: 0.5rem; }
+  .plan-time { font-size: 0.7rem; }
+  .plan-time-end { font-size: 0.65rem; }
+  .plan-gap { margin-left: calc(62px + 0.5rem); }
+  .plan-unscheduled-item { flex-direction: column; align-items: stretch; }
+}
+
+/* ===== Checklist (subtasks) ===== */
+.subtask-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.subtask-item { display: flex; align-items: center; gap: 0.5rem; }
+.subtask-item input[type='checkbox'] { width: 16px; height: 16px; accent-color: var(--primary); flex-shrink: 0; cursor: pointer; }
+.subtask-item .form-input { flex: 1; padding-top: 0.45rem; padding-bottom: 0.45rem; }
+.subtask-text { flex: 1; font-size: 0.875rem; color: var(--text-main); overflow-wrap: anywhere; }
+.subtask-item.done .subtask-text { text-decoration: line-through; color: var(--text-muted); }
+.subtask-add { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.subtask-add .form-input { flex: 1; }
+.subtask-progress { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
+.repeat-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--info); font-weight: 600; }

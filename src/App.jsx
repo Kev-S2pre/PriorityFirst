@@ -5,6 +5,7 @@ import TaskManager from './components/TaskManager';
 import PrioritizerView from './components/PrioritizerView';
 import ScheduleCalendar from './components/ScheduleCalendar';
 import AnalyticsView from './components/AnalyticsView';
+import PlanMyDay from './components/PlanMyDay';
 import TaskModal from './components/TaskModal';
 import SettingsModal from './components/SettingsModal';
 import ProfilePanel from './components/ProfilePanel';
@@ -16,6 +17,8 @@ import { authService } from './services/authService';
 import { cloudSync, isCloudEnabled } from './services/cloudSync';
 import { openedFromRecoveryLink } from './services/supabaseClient';
 import { prioritizeTasks } from './services/prioritizationEngine';
+import { buildNextOccurrence } from './services/recurrence';
+import { formatDeadline } from './data/taskOptions';
 import { 
   generateNotifications, 
   playNotificationSound,
@@ -291,10 +294,22 @@ export default function App() {
     setIsTaskModalOpen(true);
   };
 
+  // Small in-place changes such as ticking a checklist item
+  const handleUpdateTask = (id, updates) => {
+    try {
+      storageService.updateTask(id, updates, currentUser?.id);
+      setTasks(storageService.getTasks(currentUser?.id));
+    } catch (err) {
+      showToast('Error updating task: ' + err.message, 'error');
+    }
+  };
+
   const handleSaveTask = (taskData) => {
     try {
       if (taskToEdit) {
+        const wasDone = taskToEdit.status === 'completed';
         const updated = storageService.updateTask(taskToEdit.id, taskData, currentUser?.id);
+        if (!wasDone && updated.status === 'completed') spawnNextOccurrence(updated);
         setTasks(storageService.getTasks(currentUser?.id));
         showToast(`Task "${updated.title}" updated successfully`, 'success');
       } else {
@@ -324,13 +339,24 @@ export default function App() {
     });
   };
 
+  // Completing a repeating task creates its next occurrence; the finished copy stops repeating
+  const spawnNextOccurrence = (task) => {
+    const next = buildNextOccurrence(task);
+    if (!next) return null;
+    storageService.updateTask(task.id, { recurrence: 'none' }, currentUser?.id);
+    return storageService.createTask(next, currentUser?.id);
+  };
+
   const handleToggleComplete = (id) => {
     const updated = storageService.toggleComplete(id, currentUser?.id);
     if (updated) {
-      setTasks(storageService.getTasks(currentUser?.id));
       const isDone = updated.status === 'completed';
+      const next = isDone ? spawnNextOccurrence(updated) : null;
+      setTasks(storageService.getTasks(currentUser?.id));
       showToast(
-        isDone ? `✓ Completed: "${updated.title}"` : `Reopened: "${updated.title}"`,
+        isDone
+          ? `✓ Completed: "${updated.title}"${next ? ` · next one due ${formatDeadline(next.deadlineDate, next.deadlineTime)}` : ''}`
+          : `Reopened: "${updated.title}"`,
         isDone ? 'success' : 'info'
       );
       if (isDone && settings.soundAlertsEnabled) {
@@ -446,6 +472,18 @@ export default function App() {
                 onEditTask={handleEditTask}
                 onDeleteTask={handleDeleteTask}
                 onToggleComplete={handleToggleComplete}
+                onUpdateTask={handleUpdateTask}
+              />
+            )}
+
+            {activeTab === 'plan' && (
+              <PlanMyDay
+                rankedTasks={rankedTasks}
+                settings={settings}
+                onToggleComplete={handleToggleComplete}
+                onEditTask={handleEditTask}
+                onOpenAddTask={handleOpenAddTask}
+                onOpenSettings={() => openSettings('general')}
               />
             )}
 

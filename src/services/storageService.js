@@ -1,5 +1,7 @@
 import { generateSampleTasks } from '../data/sampleTasks.js';
 import { durationFromTimes, normalizeCategory } from '../data/taskOptions.js';
+import { normalizeRecurrence } from './recurrence.js';
+import { DEFAULT_PLANNER } from './dayPlanner.js';
 
 const TASKS_KEY = 'priorityfirst_tasks_v1';
 const INITIALIZED_KEY = 'priorityfirst_initialized_v1';
@@ -19,7 +21,21 @@ export const DEFAULT_SETTINGS = {
   browserNotificationsEnabled: false,
   soundAlertsEnabled: true,
   dailyWorkloadLimitHours: 8, // Realistic working capacity per day
+  ...DEFAULT_PLANNER, // Plan My Day: working hours and break length
 };
+
+// Checklist items: short text, done flag; at most 20 per task
+export function sanitizeSubtasks(subtasks) {
+  if (!Array.isArray(subtasks)) return [];
+  return subtasks
+    .filter(s => s && typeof s.text === 'string' && s.text.trim())
+    .slice(0, 20)
+    .map((s, i) => ({
+      id: typeof s.id === 'string' && s.id ? s.id : `sub-${Date.now()}-${i}`,
+      text: s.text.trim().slice(0, 120),
+      done: !!s.done
+    }));
+}
 
 function getTasksKey(userId) {
   return userId ? `priorityfirst_tasks_${userId}_v1` : TASKS_KEY;
@@ -66,6 +82,8 @@ function sanitizeTask(task) {
     endTime,
     scheduledStartTime: startTime,
     reminderAt: typeof task.reminderAt === 'string' && task.reminderAt ? task.reminderAt : null,
+    recurrence: normalizeRecurrence(task.recurrence),
+    subtasks: sanitizeSubtasks(task.subtasks),
   };
 }
 

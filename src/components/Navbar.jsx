@@ -5,6 +5,7 @@ import {
   ListTodo, 
   Sliders, 
   Calendar, 
+  CalendarClock, 
   BarChart3, 
   Bell, 
   Settings, 
@@ -89,6 +90,15 @@ export default function Navbar({
               <ListTodo size={16} />
               <span>Tasks</span>
               {tasksCount > 0 && <span className="nav-tab-badge">{tasksCount}</span>}
+            </button>
+
+            <button 
+              className={`nav-tab-btn ${activeTab === 'plan' ? 'active' : ''}`}
+              onClick={() => setActiveTab('plan')}
+              id="nav-tab-plan"
+            >
+              <CalendarClock size={16} />
+              <span>Plan My Day</span>
             </button>
 
             <button 
