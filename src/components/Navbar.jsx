@@ -7,8 +7,6 @@ import {
   Calendar, 
   BarChart3, 
   Bell, 
-  Moon, 
-  Sun, 
   Settings, 
   AlertTriangle,
   Clock,
@@ -26,8 +24,6 @@ export default function Navbar({
   onOpenProfile,
   onOpenSettings,
   notifications,
-  theme,
-  onToggleTheme,
   tasksCount,
   currentUser,
   syncStatus = 'local',
@@ -213,17 +209,6 @@ export default function Navbar({
             )}
           </div>
         )}
-
-          {/* Theme Toggle */}
-          <button 
-            className="icon-btn"
-            onClick={onToggleTheme}
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            id="btn-theme-toggle"
-            aria-label="Toggle visual theme"
-          >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
 
           {/* Settings (Protected: there's nothing to configure before signing in) */}
           {currentUser && (

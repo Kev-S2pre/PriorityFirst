@@ -1656,24 +1656,8 @@ html, body, #root { max-width: 100%; overflow-x: hidden; }
 .settings-switch.on { background: var(--primary); border-color: var(--primary); }
 .settings-switch.on span { transform: translateX(20px); }
 
-.settings-theme-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 160px)); gap: 0.75rem; }
 
-.settings-theme-option {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1.25rem 1rem;
-  border-radius: var(--radius-md);
-  border: 2px solid var(--border-subtle);
-  background: var(--bg-card);
-  color: var(--text-main);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
 
-.settings-theme-option.active { border-color: var(--primary); color: var(--primary); }
 
 .settings-status { font-size: 0.8rem; padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); }
 .settings-status.success { color: var(--success); background: rgba(16, 185, 129, 0.1); }

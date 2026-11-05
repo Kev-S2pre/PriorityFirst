@@ -84,10 +84,14 @@ export default function App() {
     }, 3500);
   }, []);
 
-  // Theme synchronization with HTML document element
+  // Follow the device's light/dark setting, including changes while the app is open
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', settings.theme || 'dark');
-  }, [settings.theme]);
+    const query = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => document.documentElement.setAttribute('data-theme', query.matches ? 'dark' : 'light');
+    apply();
+    query.addEventListener('change', apply);
+    return () => query.removeEventListener('change', apply);
+  }, []);
 
   // ---- Cloud auto-save (Supabase) ----
   // syncStatus: 'local' (no cloud configured) | 'loading' | 'saving' | 'saved' | 'offline'
@@ -345,13 +349,6 @@ export default function App() {
     showToast(`Prioritization model updated: ${presetKey.replace('_', ' ').toUpperCase()}`, 'info');
   };
 
-  // Theme Toggle
-  const handleToggleTheme = () => {
-    const nextTheme = settings.theme === 'dark' ? 'light' : 'dark';
-    const updated = storageService.saveSettings({ theme: nextTheme });
-    setSettings(updated);
-  };
-
   // Backup & Restore
   const handleExportBackup = () => {
     const jsonStr = storageService.exportBackup(currentUser?.id);
@@ -411,8 +408,6 @@ export default function App() {
         onOpenProfile={openProfile}
         onOpenSettings={openSettings}
         notifications={notifications}
-        theme={settings.theme}
-        onToggleTheme={handleToggleTheme}
         tasksCount={tasks.length}
         currentUser={currentUser}
         syncStatus={syncStatus}

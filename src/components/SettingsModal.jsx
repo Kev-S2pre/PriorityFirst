@@ -13,8 +13,6 @@ import {
   Lock,
   Mail,
   SlidersHorizontal,
-  Sun,
-  Moon,
   Settings as SettingsIcon
 } from 'lucide-react';
 import { browserNotificationService, playNotificationSound } from '../services/notificationService';
@@ -229,28 +227,6 @@ export default function SettingsModal({
 
             {section === 'general' && (
               <div className="settings-stack">
-                <div>
-                  <div className="settings-subtitle">Theme</div>
-                  <div className="settings-theme-grid">
-                    {[
-                      { id: 'light', label: 'Light', icon: Sun },
-                      { id: 'dark', label: 'Dark', icon: Moon }
-                    ].map(({ id, label, icon: Icon }) => (
-                      <button
-                        key={id}
-                        type="button"
-                        className={`settings-theme-option ${settings.theme === id ? 'active' : ''}`}
-                        onClick={() => onUpdateSettings({ theme: id })}
-                        aria-pressed={settings.theme === id}
-                        id={`theme-option-${id}`}
-                      >
-                        <Icon size={22} />
-                        <span>{label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 <SettingRow
                   icon={SlidersHorizontal}
                   title="Daily Workload Limit"
